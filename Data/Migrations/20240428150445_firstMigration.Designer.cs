@@ -12,8 +12,8 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextReservation))]
-    [Migration("20240428091920_Creation_base2")]
-    partial class Creation_base2
+    [Migration("20240428150445_firstMigration")]
+    partial class firstMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

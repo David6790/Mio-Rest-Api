@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mio_Rest_Api.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Creation_base : Migration
+    public partial class firstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,8 @@ namespace Mio_Rest_Api.Data.Migrations
                 name: "Clients",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Prenom = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Telephone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
@@ -47,7 +48,7 @@ namespace Mio_Rest_Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    IdClient = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdClient = table.Column<int>(type: "int", nullable: false),
                     DateResa = table.Column<DateOnly>(type: "date", nullable: false),
                     TimeResa = table.Column<TimeOnly>(type: "time", nullable: false),
                     NumberOfGuest = table.Column<int>(type: "int", nullable: false),

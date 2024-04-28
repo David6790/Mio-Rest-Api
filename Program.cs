@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
+using Mio_Rest_Api.Services;
 
 namespace Mio_Rest_Api
 {
@@ -14,6 +15,7 @@ namespace Mio_Rest_Api
 
             // Add services to the container.
             builder.Services.AddDbContext<ContextReservation>(opt => opt.UseSqlServer(connect));
+            builder.Services.AddScoped<IServiceReservation, ServiceReservations>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

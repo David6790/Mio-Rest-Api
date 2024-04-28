@@ -1,8 +1,8 @@
--- Déclarer des variables pour stocker les informations temporaires des clients et des réservations
+-- Déclarer des variables pour stocker les informations temporaires des réservations
 DECLARE @i int = 1;
 DECLARE @dateResa date;
 DECLARE @timeResa time;
-DECLARE @clientId uniqueidentifier;
+DECLARE @clientId int;
 
 -- Commencer la transaction
 BEGIN TRANSACTION;
@@ -10,19 +10,18 @@ BEGIN TRANSACTION;
 -- Boucle pour générer les clients et les réservations
 WHILE @i <= 40
 BEGIN
-    -- Générer un nouveau GUID pour le client
-    SET @clientId = NEWID();
-
-    -- Insérer un nouveau client avec le GUID
-    INSERT INTO [Clients] (Id, Name, Prenom, Telephone, Email, FreeTable21)
+    -- Insérer un nouveau client
+    INSERT INTO [Clients] (Name, Prenom, Telephone, Email, FreeTable21)
     VALUES (
-        @clientId, -- GUID du client
         'Client' + CAST(@i AS nvarchar(50)), -- Nom générique avec index
         'Prenom' + CAST(@i AS nvarchar(50)), -- Prénom générique avec index
         '555-01' + RIGHT('00' + CAST(@i AS nvarchar(50)), 2), -- Numéro de téléphone générique
         'email' + CAST(@i AS nvarchar(50)) + '@example.com', -- Email générique
         'N' -- FreeTable21 toujours à 'N'
     );
+
+    -- Sélectionner le dernier ID de client inséré
+    SET @clientId = SCOPE_IDENTITY();
 
     -- Générer une date aléatoire pour la réservation dans les 30 prochains jours
     SET @dateResa = DATEADD(day, ABS(CHECKSUM(NEWID()) % 30), GETDATE());

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.Entities;
+using Mio_Rest_Api.Services;
 
 namespace Mio_Rest_Api.Controllers
 {
@@ -14,95 +15,96 @@ namespace Mio_Rest_Api.Controllers
     [ApiController]
     public class ReservationsController : ControllerBase
     {
-        private readonly ContextReservation _context;
+        private readonly IServiceReservation _serviceReservations;
 
-        public ReservationsController(ContextReservation context)
+        public ReservationsController(IServiceReservation service)
         {
-            _context = context;
+            _serviceReservations = service;
         }
 
         // GET: api/Reservations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
         {
-            return await _context.Reservations.ToListAsync();
+            var reservations = await _serviceReservations.GetReservations();
+            return Ok(reservations);
         }
 
         // GET: api/Reservations/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Reservation>> GetReservation(int id)
         {
-            var reservation = await _context.Reservations.FindAsync(id);
+            var reservation = await _serviceReservations.GetReservation(id);
 
             if (reservation == null)
             {
                 return NotFound();
             }
 
-            return reservation;
+            return Ok(reservation);
         }
 
-        // PUT: api/Reservations/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutReservation(int id, Reservation reservation)
-        {
-            if (id != reservation.Id)
-            {
-                return BadRequest();
-            }
+        //// PUT: api/Reservations/5
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutReservation(int id, Reservation reservation)
+        //{
+        //    if (id != reservation.Id)
+        //    {
+        //        return BadRequest();
+        //    }
 
-            _context.Entry(reservation).State = EntityState.Modified;
+        //    _context.Entry(reservation).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReservationExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!ReservationExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
-        // POST: api/Reservations
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Reservation>> PostReservation(Reservation reservation)
-        {
-            _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
+        //// POST: api/Reservations
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPost]
+        //public async Task<ActionResult<Reservation>> PostReservation(Reservation reservation)
+        //{
+        //    _context.Reservations.Add(reservation);
+        //    await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetReservation", new { id = reservation.Id }, reservation);
-        }
+        //    return CreatedAtAction("GetReservation", new { id = reservation.Id }, reservation);
+        //}
 
-        // DELETE: api/Reservations/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteReservation(int id)
-        {
-            var reservation = await _context.Reservations.FindAsync(id);
-            if (reservation == null)
-            {
-                return NotFound();
-            }
+        //// DELETE: api/Reservations/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteReservation(int id)
+        //{
+        //    var reservation = await _context.Reservations.FindAsync(id);
+        //    if (reservation == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            _context.Reservations.Remove(reservation);
-            await _context.SaveChangesAsync();
+        //    _context.Reservations.Remove(reservation);
+        //    await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
-        private bool ReservationExists(int id)
-        {
-            return _context.Reservations.Any(e => e.Id == id);
-        }
+        //private bool ReservationExists(int id)
+        //{
+        //    return _context.Reservations.Any(e => e.Id == id);
+        //}
     }
 }
