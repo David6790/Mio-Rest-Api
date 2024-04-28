@@ -26,7 +26,7 @@ namespace Mio_Rest_Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
         {
-            var reservations = await _serviceReservations.GetReservations();
+            var reservations = await _serviceReservations.GetAllReservations();
             return Ok(reservations);
         }
 

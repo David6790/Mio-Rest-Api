@@ -6,8 +6,8 @@ namespace Mio_Rest_Api.Services
 {
     public interface IServiceReservation
     {
-        Task<List<Reservation>> GetReservations();
-        Task<Reservation> GetReservation(int id);
+        Task<List<Reservation>> GetAllReservations();
+        Task<Reservation?> GetReservation(int id);
 
     }
     public class ServiceReservations : IServiceReservation
@@ -17,7 +17,7 @@ namespace Mio_Rest_Api.Services
         {
             _contexte = contexte;
         }
-        public async Task<List<Reservation>> GetReservations()
+        public async Task<List<Reservation>> GetAllReservations()
         {
             return await _contexte.Reservations.ToListAsync();
         }
