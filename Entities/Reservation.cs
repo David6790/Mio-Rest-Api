@@ -3,7 +3,7 @@
     public class Reservation
     {
         public int Id { get; set; }
-        public Guid IdClient { get; set; }
+        public int IdClient { get; set; }
         public DateOnly DateResa { get; set; }
         public TimeOnly TimeResa { get; set; }
         public int NumberOfGuest { get; set; }

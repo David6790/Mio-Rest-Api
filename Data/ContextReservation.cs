@@ -39,6 +39,7 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e=>e.Telephone).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e=>e.Email).HasMaxLength(255).IsUnicode(true);
                 entity.Property(e=>e.FreeTable21).HasMaxLength(1).IsUnicode(false);
+                entity.HasMany<Reservation>().WithOne().HasForeignKey(e => e.IdClient);
 
 
             });
