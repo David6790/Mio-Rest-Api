@@ -19,12 +19,15 @@ namespace Mio_Rest_Api.Services
         }
         public async Task<List<Reservation>> GetAllReservations()
         {
-            return await _contexte.Reservations.ToListAsync();
+            return await _contexte.Reservations.Include(r=>r.Client).ToListAsync();
         }
 
         public async Task<Reservation?> GetReservation(int id)
         {
-            return await _contexte.Reservations.FindAsync(id);
+            return await _contexte.Reservations
+                .Include(r => r.Client)  
+                .FirstOrDefaultAsync(r => r.Id == id);  
         }
+
     }
 }

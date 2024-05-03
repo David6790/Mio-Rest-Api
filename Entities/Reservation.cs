@@ -16,6 +16,9 @@
         public string IsPowerUser { get; set; } = "N";
         public string Status { get; set; } = "P";
         public string OccupationStatusOnBook { get; set; } = "RAS";
+        public string FreeTable21 { get; set; } = string.Empty;
+        public virtual Client Client { get; set; } = null!; 
+        
     }
 
 
@@ -26,7 +29,9 @@
         public string Prenom { get; set; } = string.Empty;
         public string? Telephone { get; set; } 
         public string? Email { get; set; }
-        public string FreeTable21 { get; set; } = string.Empty;
+        public int NumberOfReservation { get; set; } = 1;
+        
+        
     }
 
     public class OccupationStatus

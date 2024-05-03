@@ -12,8 +12,8 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextReservation))]
-    [Migration("20240428150445_firstMigration")]
-    partial class firstMigration
+    [Migration("20240503025458_Update2")]
+    partial class Update2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,17 +38,14 @@ namespace Mio_Rest_Api.Data.Migrations
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("FreeTable21")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(1)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("NumberOfReservation")
+                        .HasColumnType("int");
 
                     b.Property<string>("Prenom")
                         .IsRequired()
@@ -97,9 +94,9 @@ namespace Mio_Rest_Api.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comment")
-                        .HasMaxLength(500)
+                        .HasMaxLength(1000)
                         .IsUnicode(true)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("CreaTimeStamp")
                         .HasColumnType("datetime2");
@@ -112,6 +109,12 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     b.Property<DateOnly>("DateResa")
                         .HasColumnType("date");
+
+                    b.Property<string>("FreeTable21")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(1)");
 
                     b.Property<int>("IdClient")
                         .HasColumnType("int");
@@ -163,11 +166,13 @@ namespace Mio_Rest_Api.Data.Migrations
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
                 {
-                    b.HasOne("Mio_Rest_Api.Entities.Client", null)
+                    b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
                         .WithMany()
                         .HasForeignKey("IdClient")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Client");
                 });
 #pragma warning restore 612, 618
         }

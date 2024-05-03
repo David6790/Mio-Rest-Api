@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextReservation))]
-    partial class ContextReservationModelSnapshot : ModelSnapshot
+    [Migration("20240503021841_CreationBase")]
+    partial class CreationBase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,13 +166,11 @@ namespace Mio_Rest_Api.Data.Migrations
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
                 {
-                    b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
+                    b.HasOne("Mio_Rest_Api.Entities.Client", null)
                         .WithMany()
                         .HasForeignKey("IdClient")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Client");
                 });
 #pragma warning restore 612, 618
         }

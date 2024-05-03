@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mio_Rest_Api.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class firstMigration : Migration
+    public partial class CreationBase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     Prenom = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Telephone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    FreeTable21 = table.Column<string>(type: "varchar(1)", unicode: false, maxLength: 1, nullable: false)
+                    NumberOfReservation = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -56,11 +56,12 @@ namespace Mio_Rest_Api.Data.Migrations
                     UpdateTimeStamp = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     UpdatedBy = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Comment = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     Placed = table.Column<string>(type: "varchar(1)", unicode: false, maxLength: 1, nullable: false),
                     IsPowerUser = table.Column<string>(type: "varchar(1)", unicode: false, maxLength: 1, nullable: false),
                     Status = table.Column<string>(type: "varchar(1)", unicode: false, maxLength: 1, nullable: false),
-                    OccupationStatusOnBook = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    OccupationStatusOnBook = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    FreeTable21 = table.Column<string>(type: "varchar(1)", unicode: false, maxLength: 1, nullable: false)
                 },
                 constraints: table =>
                 {

@@ -22,10 +22,12 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e=>e.CreatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e=>e.UpdatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e=>e.OccupationStatusOnBook).HasMaxLength(20).IsUnicode(true);
-                entity.Property(e=>e.Comment).HasMaxLength(500).IsUnicode(true);
+                entity.Property(e=>e.Comment).HasMaxLength(1000).IsUnicode(true);
                 entity.Property(e=>e.Placed).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e=>e.IsPowerUser).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e=>e.Status).HasMaxLength(1).IsUnicode(false);
+                entity.Property(e => e.FreeTable21).HasMaxLength(1).IsUnicode(false);
+                entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
 
 
 
@@ -38,8 +40,7 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e=>e.Prenom).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e=>e.Telephone).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e=>e.Email).HasMaxLength(255).IsUnicode(true);
-                entity.Property(e=>e.FreeTable21).HasMaxLength(1).IsUnicode(false);
-                entity.HasMany<Reservation>().WithOne().HasForeignKey(e => e.IdClient);
+                
 
 
             });
