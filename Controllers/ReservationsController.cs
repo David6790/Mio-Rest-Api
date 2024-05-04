@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
+using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
 using Mio_Rest_Api.Services;
 
@@ -26,22 +27,56 @@ namespace Mio_Rest_Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
         {
-            var reservations = await _serviceReservations.GetAllReservations();
-            return Ok(reservations);
+            try
+            {
+                var reservations = await _serviceReservations.GetAllReservations();
+                return Ok(reservations);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         // GET: api/Reservations/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Reservation>> GetReservation(int id)
         {
-            var reservation = await _serviceReservations.GetReservation(id);
-
-            if (reservation == null)
+            try
             {
-                return NotFound();
+                var reservation = await _serviceReservations.GetReservation(id);
+                if (reservation == null)
+                {
+                    return NotFound();
+                }
+                return Ok(reservation);
             }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
-            return Ok(reservation);
+        [HttpPost]
+        public async Task<ActionResult<Reservation>> CreateReservation(ReservationDTO reservationDTO)
+        {
+            try
+            {
+                if (reservationDTO == null)
+                {
+                    return BadRequest("Reservation data must be provided");
+                }
+
+                var reservation = await _serviceReservations.CreateReservation(reservationDTO);
+                return CreatedAtAction(nameof(GetReservation), new { id = reservation.Id }, reservation);
+            }
+            catch (Exception ex)
+            {
+                // Log l'exception si nécessaire et retourne une réponse appropriée
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         //// PUT: api/Reservations/5
