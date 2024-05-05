@@ -1,4 +1,6 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.Services;
@@ -23,6 +25,24 @@ namespace Mio_Rest_Api
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.Authority = builder.Configuration["identityServerUrl"];
+                    options.TokenValidationParameters.ValidateAudience = false;
+
+                    options.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+                });
+
+            // Ajoute le service d'autorisation
+            builder.Services.AddAuthorization(options =>
+            {
+                // Spécifie que tout utilisateur de l'API doit être authentifié
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                   .RequireAuthenticatedUser()
+                   .Build();
+            });
 
             var app = builder.Build();
 
