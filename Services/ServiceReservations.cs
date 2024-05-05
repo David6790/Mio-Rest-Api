@@ -16,10 +16,14 @@ namespace Mio_Rest_Api.Services
     public class ServiceReservations : IServiceReservation
     {
         private readonly ContextReservation _contexte;
+
+        //Constructeur de la classe pour instancier  le db_context
         public ServiceReservations(ContextReservation contexte)
         {
             _contexte = contexte;
         }
+
+
         public async Task<List<Reservation>> GetAllReservations()
         {
             return await _contexte.Reservations.Include(r=>r.Client).ToListAsync();

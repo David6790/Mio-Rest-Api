@@ -48,7 +48,7 @@ namespace Mio_Rest_Api.Controllers
                 var reservation = await _serviceReservations.GetReservation(id);
                 if (reservation == null)
                 {
-                              return NotFound();
+                    return NotFound();
                 }
                 return Ok(reservation);
             }
