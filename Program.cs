@@ -26,23 +26,6 @@ namespace Mio_Rest_Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = builder.Configuration["identityServerUrl"];
-                    options.TokenValidationParameters.ValidateAudience = false;
-
-                    options.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
-                });
-
-            // Ajoute le service d'autorisation
-            builder.Services.AddAuthorization(options =>
-            {
-                // Spécifie que tout utilisateur de l'API doit être authentifié
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                   .RequireAuthenticatedUser()
-                   .Build();
-            });
 
             var app = builder.Build();
 
@@ -55,7 +38,7 @@ namespace Mio_Rest_Api
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+           
 
 
             app.MapControllers();
