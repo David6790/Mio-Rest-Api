@@ -19,12 +19,24 @@ namespace Mio_Rest_Api
             // Add services to the container.
             builder.Services.AddDbContext<ContextReservation>(opt => opt.UseSqlServer(connect));
             builder.Services.AddScoped<IServiceReservation, ServiceReservations>();
+            builder.Services.AddScoped<IServiceOccupation, ServiceOccupation>();
 
             builder.Services.AddControllers().AddJsonOptions(opt =>
             opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigin", // Nom de la politique CORS
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:3000") // Autoriser les requêtes de ce domaine
+                               .AllowAnyHeader() // Autoriser tous les en-têtes
+                               .AllowAnyMethod(); // Autoriser toutes les méthodes
+                    });
+            });
 
 
             var app = builder.Build();
@@ -42,6 +54,7 @@ namespace Mio_Rest_Api
 
 
             app.MapControllers();
+            app.UseCors("AllowSpecificOrigin");
 
             app.Run();
         }

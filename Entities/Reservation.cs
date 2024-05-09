@@ -37,7 +37,7 @@
     public class OccupationStatus
     {
         public int Id { get; set; }
-        public DateTime DateOfEffect { get; set; }
+        public DateOnly DateOfEffect { get; set; }
         public string OccStatus { get; set; } = "RAS";
 
     }
