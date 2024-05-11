@@ -1,6 +1,6 @@
 ﻿namespace Mio_Rest_Api.Entities
 {
-    public class Reservation
+    public class ReservationEntity
     {
         public int Id { get; set; }
         public int IdClient { get; set; }

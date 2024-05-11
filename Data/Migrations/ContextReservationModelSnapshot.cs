@@ -10,7 +10,7 @@ using Mio_Rest_Api.Data;
 
 namespace Mio_Rest_Api.Data.Migrations
 {
-    [DbContext(typeof(ContextReservation))]
+    [DbContext(typeof(ContextApplication))]
     partial class ContextReservationModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -60,6 +60,44 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("Mio_Rest_Api.Entities.MenuEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cheesecake")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DessertJour")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Entree")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Plat")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Menu");
+                });
+
             modelBuilder.Entity("Mio_Rest_Api.Entities.OccupationStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -82,7 +120,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("OccupationStatus");
                 });
 
-            modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
+            modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -161,7 +199,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("Reservations");
                 });
 
-            modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
+            modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
                     b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
                         .WithMany()

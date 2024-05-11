@@ -14,9 +14,9 @@ namespace Mio_Rest_Api.Services
 
     public class ServiceOccupation : IServiceOccupation
     {
-        private readonly ContextReservation _contexte;
+        private readonly ContextApplication _contexte;
 
-        public ServiceOccupation(ContextReservation contexte)
+        public ServiceOccupation(ContextApplication contexte)
         {
             _contexte = contexte;
         }

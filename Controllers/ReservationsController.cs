@@ -25,7 +25,7 @@ namespace Mio_Rest_Api.Controllers
 
         // GET: api/Reservations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
+        public async Task<ActionResult<IEnumerable<ReservationEntity>>> GetReservations()
         {
             try
             {
@@ -41,7 +41,7 @@ namespace Mio_Rest_Api.Controllers
 
         // GET: api/Reservations/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Reservation>> GetReservation(int id)
+        public async Task<ActionResult<ReservationEntity>> GetReservation(int id)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace Mio_Rest_Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Reservation>> CreateReservation(ReservationDTO reservationDTO)
+        public async Task<ActionResult<ReservationEntity>> CreateReservation(ReservationDTO reservationDTO)
         {
             try
             {

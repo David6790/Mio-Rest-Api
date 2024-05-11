@@ -1,10 +1,11 @@
-
+ï»¿
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.Services;
 using System.Text.Json.Serialization;
+using Mio_Rest_Api.Controllers;
 
 namespace Mio_Rest_Api
 {
@@ -17,9 +18,10 @@ namespace Mio_Rest_Api
             string? connect = builder.Configuration.GetConnectionString("MioConnect");
 
             // Add services to the container.
-            builder.Services.AddDbContext<ContextReservation>(opt => opt.UseSqlServer(connect));
+            builder.Services.AddDbContext<ContextApplication>(opt => opt.UseSqlServer(connect));
             builder.Services.AddScoped<IServiceReservation, ServiceReservations>();
             builder.Services.AddScoped<IServiceOccupation, ServiceOccupation>();
+            builder.Services.AddScoped<IServiceMenuDuJour, ServiceMenuDuJour>();
 
             builder.Services.AddControllers().AddJsonOptions(opt =>
             opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
@@ -32,9 +34,9 @@ namespace Mio_Rest_Api
                 options.AddPolicy("AllowSpecificOrigin", // Nom de la politique CORS
                     builder =>
                     {
-                        builder.WithOrigins("http://localhost:3000") // Autoriser les requêtes de ce domaine
-                               .AllowAnyHeader() // Autoriser tous les en-têtes
-                               .AllowAnyMethod(); // Autoriser toutes les méthodes
+                        builder.WithOrigins("http://localhost:3000") // Autoriser les requï¿½tes de ce domaine
+                               .AllowAnyHeader() // Autoriser tous les en-tï¿½tes
+                               .AllowAnyMethod(); // Autoriser toutes les mï¿½thodes
                     });
             });
 
@@ -55,6 +57,8 @@ namespace Mio_Rest_Api
 
             app.MapControllers();
             app.UseCors("AllowSpecificOrigin");
+
+                       
 
             app.Run();
         }

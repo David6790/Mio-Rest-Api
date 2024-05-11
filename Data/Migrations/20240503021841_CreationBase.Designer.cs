@@ -11,7 +11,7 @@ using Mio_Rest_Api.Data;
 
 namespace Mio_Rest_Api.Data.Migrations
 {
-    [DbContext(typeof(ContextReservation))]
+    [DbContext(typeof(ContextApplication))]
     [Migration("20240503021841_CreationBase")]
     partial class CreationBase
     {

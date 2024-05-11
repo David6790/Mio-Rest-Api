@@ -3,20 +3,21 @@ using Mio_Rest_Api.Entities;
 
 namespace Mio_Rest_Api.Data
 {
-    public class ContextReservation : DbContext
+    public class ContextApplication : DbContext
     {
-        public ContextReservation(DbContextOptions <ContextReservation> options)
+        public ContextApplication(DbContextOptions <ContextApplication> options)
             : base(options)
         {
         }
 
-        public virtual DbSet<Reservation> Reservations { get; set; }
+        public virtual DbSet<ReservationEntity> Reservations { get; set; }
         public virtual DbSet<Client> Clients { get; set; }
         public virtual DbSet<OccupationStatus> OccupationStatus { get; set;}
+        public virtual DbSet<MenuEntity> MenuDuJour { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Reservation>(entity =>
+            modelBuilder.Entity<ReservationEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e=>e.CreatedBy).HasMaxLength(50).IsUnicode(true);
@@ -31,6 +32,15 @@ namespace Mio_Rest_Api.Data
 
 
 
+            });
+
+            modelBuilder.Entity<MenuEntity>(entity =>
+            {
+                entity.HasKey(e =>e.Id);
+                entity.Property(e=> e.Plat).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e=>e.Entree).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e=>e.DessertJour).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e=>e.Cheesecake).HasMaxLength(200).IsUnicode(true);
             });
 
             modelBuilder.Entity<Client>(entity =>
