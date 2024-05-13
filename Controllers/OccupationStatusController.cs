@@ -75,7 +75,7 @@ namespace Mio_Rest_Api.Controllers
                 if (occupationStatus == null)
                 {
                     var defaultTimeSlots = await _serviceOccupationStatus.GetDefaultTimeSlots();
-                    // Retournez les TimeSlots comme si c'était un cas "RAS"
+                    // Retourne les TimeSlots comme si c'était un cas "RAS"
                     return Ok(new
                     {
                         DateOfEffect = dateOfEffect,

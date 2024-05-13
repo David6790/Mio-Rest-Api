@@ -25,7 +25,7 @@ namespace Mio_Rest_Api.Services
 
         public async Task<List<OccupationStatus>> GetAllOccupationStatus()
         {
-            // Utilisez Include pour charger les TimeSlots associés à chaque OccupationStatus
+            // Utilise Include pour charger les TimeSlots associés à chaque OccupationStatus
             return await _contexte.OccupationStatus
                                   .Include(os => os.TimeSlots) // Charge les TimeSlots associés
                                   .ToListAsync();
@@ -38,7 +38,7 @@ namespace Mio_Rest_Api.Services
         {
             var dateOfEffect = DateOnly.ParseExact(occupationDTO.DateOfEffect, "yyyy-MM-dd");
             var existingStatus = await _contexte.OccupationStatus
-                                                .Include(os => os.TimeSlots) // Assurez-vous d'inclure les TimeSlots
+                                                .Include(os => os.TimeSlots) 
                                                 .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
 
             if (existingStatus != null)
