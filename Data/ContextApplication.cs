@@ -14,7 +14,7 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<Client> Clients { get; set; }
         public virtual DbSet<OccupationStatus> OccupationStatus { get; set; }
         public virtual DbSet<MenuEntity> MenuDuJour { get; set; }
-        public virtual DbSet<TimeSlot> TimeSlots { get; set; }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,22 +56,13 @@ namespace Mio_Rest_Api.Data
 
             });
 
-            modelBuilder.Entity<TimeSlot>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Slot).HasMaxLength(255).IsUnicode(true);
-
-
-            });
+         
 
             modelBuilder.Entity<OccupationStatus>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.OccStatus).HasMaxLength(20).IsUnicode(true);
-                entity.HasMany(e => e.TimeSlots)
-                .WithOne(t => t.OccupationStatus)
-                .HasForeignKey(t => t.OccupationStatusId)
-                .IsRequired(false);
+                
 
             });
 

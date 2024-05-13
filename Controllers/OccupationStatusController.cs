@@ -64,37 +64,31 @@ namespace Mio_Rest_Api.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-        [HttpGet("ByDate/{date}")]
-        public async Task<ActionResult<object>> GetOccupationStatusByDate(string date)
+       [HttpGet("ByDate/{date}")]
+public async Task<ActionResult<OccupationStatusDetailDTO>> GetOccupationStatusByDate(string date)
+{
+    try
+    {
+        var dateOfEffect = DateOnly.ParseExact(date, "yyyy-MM-dd");
+        var occupationStatusDetail = await _serviceOccupationStatus.GetOccupationStatusByDate(dateOfEffect);
+
+        if (occupationStatusDetail == null)
         {
-            try
-            {
-                var dateOfEffect = DateOnly.ParseExact(date, "yyyy-MM-dd");
-                var occupationStatus = await _serviceOccupationStatus.GetOccupationStatusByDate(dateOfEffect);
-
-                if (occupationStatus == null)
-                {
-                    var defaultTimeSlots = await _serviceOccupationStatus.GetDefaultTimeSlots();
-                    // Retourne les TimeSlots comme si c'était un cas "RAS"
-                    return Ok(new
-                    {
-                        DateOfEffect = dateOfEffect,
-                        OccStatus = "RAS",
-                        TimeSlots = defaultTimeSlots
-                    });
-                }
-
-                return Ok(occupationStatus);
-            }
-            catch (FormatException)
-            {
-                return BadRequest("Invalid date format. Please use yyyy-MM-dd format.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return NotFound($"No OccupationStatus found for date: {date}");
         }
+
+        return Ok(occupationStatusDetail);
+    }
+    catch (FormatException)
+    {
+        return BadRequest("Invalid date format. Please use yyyy-MM-dd format.");
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
+}
+
 
 
 

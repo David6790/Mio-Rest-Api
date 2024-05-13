@@ -34,20 +34,13 @@
         
     }
 
-    public class TimeSlot
-    {
-        public int Id { get; set; }
-        public string Slot { get; set; } = string.Empty;
-        public int? OccupationStatusId { get; set; } 
-        public virtual OccupationStatus? OccupationStatus { get; set; } =null!;
-    }
+  
 
     public class OccupationStatus
     {
         public int Id { get; set; }
         public DateOnly DateOfEffect { get; set; }
         public string OccStatus { get; set; } = "RAS";
-        public virtual List<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
 
     }
 }
