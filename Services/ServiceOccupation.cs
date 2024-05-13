@@ -10,6 +10,8 @@ namespace Mio_Rest_Api.Services
     {
         Task<List<OccupationStatus>> GetAllOccupationStatus();
         Task<(List<OccupationStatus>, bool)> AddOccupationStatus(OccupationDTO occupationDTO);
+        Task<OccupationStatus?> GetOccupationStatusByDate(DateOnly date);
+        Task<List<TimeSlot>> GetDefaultTimeSlots();
     }
 
     public class ServiceOccupation : IServiceOccupation
@@ -23,8 +25,12 @@ namespace Mio_Rest_Api.Services
 
         public async Task<List<OccupationStatus>> GetAllOccupationStatus()
         {
-            return await _contexte.OccupationStatus.ToListAsync();
+            // Utilisez Include pour charger les TimeSlots associés à chaque OccupationStatus
+            return await _contexte.OccupationStatus
+                                  .Include(os => os.TimeSlots) // Charge les TimeSlots associés
+                                  .ToListAsync();
         }
+
 
 
 
@@ -32,28 +38,70 @@ namespace Mio_Rest_Api.Services
         {
             var dateOfEffect = DateOnly.ParseExact(occupationDTO.DateOfEffect, "yyyy-MM-dd");
             var existingStatus = await _contexte.OccupationStatus
-                                             .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
+                                                .Include(os => os.TimeSlots) // Assurez-vous d'inclure les TimeSlots
+                                                .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
 
             if (existingStatus != null)
             {
-                // Renvoie l'occupation existante avec un indicateur de conflit
-                return (new List<OccupationStatus> { existingStatus }, true);
+                return (new List<OccupationStatus> { existingStatus }, true); // Conflit détecté
             }
 
-            // Création d'un nouveau statut d'occupation si aucun conflit n'a été trouvé
             var newOccupationStatus = new OccupationStatus
             {
                 DateOfEffect = dateOfEffect,
-                OccStatus = occupationDTO.OccStatus
+                OccStatus = occupationDTO.OccStatus,
+                TimeSlots = new List<TimeSlot>() // Préparez une liste vide de TimeSlots
             };
+
+            switch (occupationDTO.OccStatus)
+            {
+                case "RAS":
+                    newOccupationStatus.TimeSlots.AddRange(
+                        _contexte.TimeSlots.Where(ts => ts.Id >= 1 && ts.Id <= 20).ToList());
+                    break;
+                
+                case "FreeTable21":
+                    newOccupationStatus.TimeSlots.AddRange(
+                        _contexte.TimeSlots.Where(ts => (ts.Id >= 1 && ts.Id <= 9) || (ts.Id >= 17 && ts.Id <= 20)).ToList());
+                    break;
+                    
+
+                case "service1Complet":
+                    newOccupationStatus.TimeSlots.AddRange(
+                        _contexte.TimeSlots.Where(ts => (ts.Id >= 1 && ts.Id <= 8) || (ts.Id >= 17 && ts.Id <= 20)).ToList());
+                    break;
+                case "service2Complet":
+                    newOccupationStatus.TimeSlots.AddRange(
+                         _contexte.TimeSlots.Where(ts => (ts.Id >= 1 && ts.Id <= 9) || (ts.Id >= 17 && ts.Id <= 20)).ToList());
+                    break;
+                    
+                default:
+                    // Peut-être traiter un cas par défaut ou rien faire si le statut n'est pas reconnu
+                    break;
+            }
 
             _contexte.OccupationStatus.Add(newOccupationStatus);
             await _contexte.SaveChangesAsync();
 
-            // Renvoie la nouvelle occupation sans indicateur de conflit
-            return (new List<OccupationStatus> { newOccupationStatus }, false);
+            return (new List<OccupationStatus> { newOccupationStatus }, false); // Pas de conflit, retourner la nouvelle occupation
         }
+
+        public async Task<OccupationStatus?> GetOccupationStatusByDate(DateOnly date)
+        {
+            return await _contexte.OccupationStatus
+                                  .Include(os => os.TimeSlots)
+                                  .FirstOrDefaultAsync(os => os.DateOfEffect == date);
+        }
+
+
+        public async Task<List<TimeSlot>> GetDefaultTimeSlots()
+        {
+            return await _contexte.TimeSlots.Where(ts => ts.Id >= 1 && ts.Id <= 20).ToListAsync();
+        }
+
+
+
     }
 
-    
+
 }

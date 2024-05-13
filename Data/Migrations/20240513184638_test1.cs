@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mio_Rest_Api.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class CreationBase : Migration
+    public partial class test1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -29,12 +29,29 @@ namespace Mio_Rest_Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MenuDuJour",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    Entree = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Plat = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Cheesecake = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    DessertJour = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MenuDuJour", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OccupationStatus",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    DateOfEffect = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateOfEffect = table.Column<DateOnly>(type: "date", nullable: false),
                     OccStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
@@ -74,23 +91,53 @@ namespace Mio_Rest_Api.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TimeSlots",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Slot = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    OccupationStatusId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TimeSlots", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TimeSlots_OccupationStatus_OccupationStatusId",
+                        column: x => x.OccupationStatusId,
+                        principalTable: "OccupationStatus",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Reservations_IdClient",
                 table: "Reservations",
                 column: "IdClient");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TimeSlots_OccupationStatusId",
+                table: "TimeSlots",
+                column: "OccupationStatusId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "OccupationStatus");
+                name: "MenuDuJour");
 
             migrationBuilder.DropTable(
                 name: "Reservations");
 
             migrationBuilder.DropTable(
+                name: "TimeSlots");
+
+            migrationBuilder.DropTable(
                 name: "Clients");
+
+            migrationBuilder.DropTable(
+                name: "OccupationStatus");
         }
     }
 }

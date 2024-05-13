@@ -64,6 +64,39 @@ namespace Mio_Rest_Api.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [HttpGet("ByDate/{date}")]
+        public async Task<ActionResult<object>> GetOccupationStatusByDate(string date)
+        {
+            try
+            {
+                var dateOfEffect = DateOnly.ParseExact(date, "yyyy-MM-dd");
+                var occupationStatus = await _serviceOccupationStatus.GetOccupationStatusByDate(dateOfEffect);
+
+                if (occupationStatus == null)
+                {
+                    var defaultTimeSlots = await _serviceOccupationStatus.GetDefaultTimeSlots();
+                    // Retournez les TimeSlots comme si c'était un cas "RAS"
+                    return Ok(new
+                    {
+                        DateOfEffect = dateOfEffect,
+                        OccStatus = "RAS",
+                        TimeSlots = defaultTimeSlots
+                    });
+                }
+
+                return Ok(occupationStatus);
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Invalid date format. Please use yyyy-MM-dd format.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
 
         //    // GET: api/OccupationStatus/5
         //    [HttpGet("{id}")]

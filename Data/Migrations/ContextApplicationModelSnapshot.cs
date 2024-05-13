@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -12,11 +11,9 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    [Migration("20240503025458_Update2")]
-    partial class Update2
+    partial class ContextApplicationModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +60,44 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("Mio_Rest_Api.Entities.MenuEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cheesecake")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DessertJour")
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Entree")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Plat")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MenuDuJour");
+                });
+
             modelBuilder.Entity("Mio_Rest_Api.Entities.OccupationStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -71,8 +106,8 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DateOfEffect")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("DateOfEffect")
+                        .HasColumnType("date");
 
                     b.Property<string>("OccStatus")
                         .IsRequired()
@@ -85,7 +120,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("OccupationStatus");
                 });
 
-            modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
+            modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -164,7 +199,31 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("Reservations");
                 });
 
-            modelBuilder.Entity("Mio_Rest_Api.Entities.Reservation", b =>
+            modelBuilder.Entity("Mio_Rest_Api.Entities.TimeSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("OccupationStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccupationStatusId");
+
+                    b.ToTable("TimeSlots");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
                     b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
                         .WithMany()
@@ -173,6 +232,20 @@ namespace Mio_Rest_Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.TimeSlot", b =>
+                {
+                    b.HasOne("Mio_Rest_Api.Entities.OccupationStatus", "OccupationStatus")
+                        .WithMany("TimeSlots")
+                        .HasForeignKey("OccupationStatusId");
+
+                    b.Navigation("OccupationStatus");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.OccupationStatus", b =>
+                {
+                    b.Navigation("TimeSlots");
                 });
 #pragma warning restore 612, 618
         }
