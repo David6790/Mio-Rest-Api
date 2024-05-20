@@ -96,6 +96,12 @@ namespace Mio_Rest_Api.Services
                         (ts.StartsWith("12:") || ts.StartsWith("13:") || ts == "19:00")
                     ).ToList();
 
+                case "Complet":
+                    // Retourne uniquement les créneaux de 12:00 à 13:45
+                    return TimeSlotConfig.TimeSlots.Where(ts =>
+                        (ts.StartsWith("12:") || ts.StartsWith("13:"))
+                    ).ToList();
+
                 default:
                     // Aucun créneau disponible
                     return new List<string>();

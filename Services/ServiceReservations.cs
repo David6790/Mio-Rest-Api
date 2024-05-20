@@ -11,6 +11,8 @@ namespace Mio_Rest_Api.Services
         Task<List<ReservationEntity>> GetAllReservations();
         Task<ReservationEntity?> GetReservation(int id);
         Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO);
+        Task<List<ReservationEntity>> GetReservationsByDate(string date);
+
 
     }
     public class ServiceReservations : IServiceReservation
@@ -36,11 +38,23 @@ namespace Mio_Rest_Api.Services
                 .FirstOrDefaultAsync(r => r.Id == id);  
         }
 
+        public async Task<List<ReservationEntity>> GetReservationsByDate(string date)
+        {
+            var reservations = await _contexte.Reservations
+                .Include(r => r.Client)
+                .Where(r => r.DateResa == DateOnly.ParseExact(date, "yyyy-MM-dd"))
+                .OrderByDescending(r => r.CreaTimeStamp)
+                .ToListAsync();
+
+            return reservations;
+        }
+
+
         public async Task<ReservationEntity>CreateReservation(ReservationDTO reservationDTO)
         {
             Client? client = await _contexte.Clients.FirstOrDefaultAsync(c =>
             
-                c.Name == reservationDTO.ClientName && c.Prenom == reservationDTO.ClientPrenom
+                c.Name == reservationDTO.ClientName && c.Prenom == reservationDTO.ClientPrenom && c.Telephone == reservationDTO.ClientTelephone
             );
 
             if (client == null)

@@ -59,6 +59,25 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        [HttpGet("byDate/{date}")]
+        public async Task<ActionResult<List<ReservationEntity>>> GetReservationsByDate(string date)
+        {
+            try
+            {
+                var reservations = await _serviceReservations.GetReservationsByDate(date);
+                return Ok(reservations); // Renvoie une liste vide si aucune réservation n'est trouvée
+            }
+            catch (Exception ex)
+            {
+                // Log l'exception (vous pouvez utiliser un logger ici)
+                Console.WriteLine(ex.Message);
+
+                // Retourne une réponse d'erreur générique
+                return StatusCode(500, "Une erreur s'est produite lors de la récupération des réservations.");
+            }
+        }
+
+
         [HttpPost]
         public async Task<ActionResult<ReservationEntity>> CreateReservation(ReservationDTO reservationDTO)
         {
