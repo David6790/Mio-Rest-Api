@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
@@ -12,6 +13,7 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> GetReservation(int id);
         Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO);
         Task<List<ReservationEntity>> GetReservationsByDate(string date);
+        Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO);
 
 
     }
@@ -76,6 +78,13 @@ namespace Mio_Rest_Api.Services
             }
             await _contexte.SaveChangesAsync();
 
+            
+
+            if(reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet")
+            {
+                reservationDTO.FreeTable21 = "Clients prévénus";
+            }
+
             ReservationEntity reservation = new ReservationEntity
             {
                 IdClient = client.Id,
@@ -83,6 +92,10 @@ namespace Mio_Rest_Api.Services
                 TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm"),
                 NumberOfGuest = reservationDTO.NumberOfGuest,
                 Comment = reservationDTO.Comment,
+                OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
+                CreatedBy = reservationDTO.CreatedBy,
+                FreeTable21 = reservationDTO.FreeTable21
+               
             };
 
             _contexte.Reservations.Add(reservation);
@@ -90,6 +103,29 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+
+
+        public async Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO)
+        {
+            var reservation = await _contexte.Reservations.FindAsync(id);
+            if (reservation == null)
+            {
+                return null;
+            }
+
+            reservation.DateResa = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
+            reservation.TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            reservation.NumberOfGuest = reservationDTO.NumberOfGuest;
+            reservation.Comment = reservationDTO.Comment;
+            reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
+            reservation.FreeTable21 = reservationDTO.FreeTable21;
+
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+
+            return reservation;
+        }
+
 
     }
 }

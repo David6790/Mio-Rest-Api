@@ -8,7 +8,7 @@
         public TimeOnly TimeResa { get; set; }
         public int NumberOfGuest { get; set; }
         public DateTime CreaTimeStamp { get; set; } = DateTime.Now;
-        public DateTime? UpdateTimeStamp { get; set; }
+        public DateTime? UpdateTimeStamp { get; set; }= DateTime.Now;
         public string CreatedBy { get; set; } = string.Empty;
         public string? UpdatedBy { get; set; }
         public string? Comment { get; set; }

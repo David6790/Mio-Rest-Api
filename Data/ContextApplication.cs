@@ -28,7 +28,7 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Placed).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.IsPowerUser).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.Status).HasMaxLength(1).IsUnicode(false);
-                entity.Property(e => e.FreeTable21).HasMaxLength(1).IsUnicode(false);
+                entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
 
 

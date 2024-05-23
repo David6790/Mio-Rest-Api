@@ -98,6 +98,35 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        // PUT: api/Reservations/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutReservation(int id, ReservationDTO reservationDTO)
+        {
+            if (reservationDTO == null)
+            {
+                return BadRequest("Reservation data must be provided");
+            }
+
+        
+
+            try
+            {
+                var updatedReservation = await _serviceReservations.UpdateReservation(id, reservationDTO);
+                if (updatedReservation == null)
+                {
+                    return NotFound("Reservation not found");
+                }
+
+                return Ok(updatedReservation);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
         //// PUT: api/Reservations/5
         //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //[HttpPut("{id}")]

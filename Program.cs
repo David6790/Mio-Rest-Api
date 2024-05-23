@@ -31,14 +31,15 @@ namespace Mio_Rest_Api
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowSpecificOrigin", // Nom de la politique CORS
+                options.AddPolicy("AllowAllOrigins", // Nom de la politique CORS
                     builder =>
                     {
-                        builder.WithOrigins("http://localhost:3000") // Autoriser les requ�tes de ce domaine
-                               .AllowAnyHeader() // Autoriser tous les en-t�tes
-                               .AllowAnyMethod(); // Autoriser toutes les m�thodes
+                        builder.AllowAnyOrigin()    // Autoriser toutes les origines
+                               .AllowAnyHeader()    // Autoriser tous les en-têtes
+                               .AllowAnyMethod();   // Autoriser toutes les méthodes
                     });
             });
+
 
 
             var app = builder.Build();
@@ -56,9 +57,9 @@ namespace Mio_Rest_Api
 
 
             app.MapControllers();
-            app.UseCors("AllowSpecificOrigin");
+            app.UseCors("AllowAllOrigins");
 
-                       
+
 
             app.Run();
         }
