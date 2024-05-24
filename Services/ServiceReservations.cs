@@ -30,14 +30,14 @@ namespace Mio_Rest_Api.Services
 
         public async Task<List<ReservationEntity>> GetAllReservations()
         {
-            return await _contexte.Reservations.Include(r=>r.Client).ToListAsync();
+            return await _contexte.Reservations.Include(r => r.Client).ToListAsync();
         }
 
         public async Task<ReservationEntity?> GetReservation(int id)
         {
             return await _contexte.Reservations
-                .Include(r => r.Client)  
-                .FirstOrDefaultAsync(r => r.Id == id);  
+                .Include(r => r.Client)
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<List<ReservationEntity>> GetReservationsByDate(string date)
@@ -52,10 +52,10 @@ namespace Mio_Rest_Api.Services
         }
 
 
-        public async Task<ReservationEntity>CreateReservation(ReservationDTO reservationDTO)
+        public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
         {
             Client? client = await _contexte.Clients.FirstOrDefaultAsync(c =>
-            
+
                 c.Name == reservationDTO.ClientName && c.Prenom == reservationDTO.ClientPrenom && c.Telephone == reservationDTO.ClientTelephone
             );
 
@@ -78,9 +78,9 @@ namespace Mio_Rest_Api.Services
             }
             await _contexte.SaveChangesAsync();
 
-            
 
-            if(reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet")
+
+            if (reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet")
             {
                 reservationDTO.FreeTable21 = "Clients prévénus";
             }
@@ -95,7 +95,7 @@ namespace Mio_Rest_Api.Services
                 OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
                 CreatedBy = reservationDTO.CreatedBy,
                 FreeTable21 = reservationDTO.FreeTable21
-               
+
             };
 
             _contexte.Reservations.Add(reservation);
@@ -107,7 +107,8 @@ namespace Mio_Rest_Api.Services
 
         public async Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO)
         {
-            var reservation = await _contexte.Reservations.FindAsync(id);
+            var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
+            ;
             if (reservation == null)
             {
                 return null;

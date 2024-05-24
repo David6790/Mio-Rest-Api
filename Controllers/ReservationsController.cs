@@ -107,7 +107,7 @@ namespace Mio_Rest_Api.Controllers
                 return BadRequest("Reservation data must be provided");
             }
 
-        
+
 
             try
             {
