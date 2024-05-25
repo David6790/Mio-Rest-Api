@@ -6,13 +6,14 @@ using Mio_Rest_Api.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace Mio_Rest_Api.Services
 {
-
     public interface IAuthService
     {
-        Task<UserEntity?> Authenticate(LoginDTO loginDto);
+        Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto);
         string GenerateJwtToken(UserEntity user);
         Task<UserEntity?> Signup(SignupDTO signupDto);
     }
@@ -28,10 +29,16 @@ namespace Mio_Rest_Api.Services
             _configuration = configuration;
         }
 
-        public async Task<UserEntity?> Authenticate(LoginDTO loginDto)
+        public async Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == loginDto.Username && u.Password == loginDto.Password);
-            return user;
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == loginDto.Username);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
+            {
+                return null;
+            }
+
+            var token = GenerateJwtToken(user);
+            return (token, user);
         }
 
         public async Task<UserEntity?> Signup(SignupDTO signupDto)
@@ -41,12 +48,16 @@ namespace Mio_Rest_Api.Services
                 return null; // Utilisateur ou email déjà existant
             }
 
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(signupDto.Password);
+
             var user = new UserEntity
             {
                 Username = signupDto.Username,
-                Password = signupDto.Password,
+                Password = hashedPassword,
                 Email = signupDto.Email,
-                Role = signupDto.Role
+                Role = signupDto.Role,
+                Nom = signupDto.Nom,
+                Prenom = signupDto.Prenom,
             };
 
             _context.Users.Add(user);
@@ -65,9 +76,9 @@ namespace Mio_Rest_Api.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role)
-        }),
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Role, user.Role)
+                }),
                 Expires = DateTime.UtcNow.AddDays(7), // Token valide pendant 7 jours
                 Issuer = jwtSettings.GetValue<string>("Issuer"),
                 Audience = jwtSettings.GetValue<string>("Audience"),
@@ -77,6 +88,5 @@ namespace Mio_Rest_Api.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
     }
 }

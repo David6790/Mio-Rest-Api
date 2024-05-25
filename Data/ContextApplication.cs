@@ -64,6 +64,8 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Password).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
+                entity.Property(e=> e.Nom).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e=> e.Prenom).HasMaxLength(200).IsUnicode(true);
             });
         }
     }

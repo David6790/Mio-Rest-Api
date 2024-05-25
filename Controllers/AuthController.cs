@@ -15,18 +15,26 @@ namespace Mio_Rest_Api.Controllers
         {
             _authService = authService;
         }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            var user = await _authService.Authenticate(loginDto);
-            if (user == null)
+            var result = await _authService.Authenticate(loginDto);
+            if (result == null)
             {
                 return Unauthorized();
             }
 
-            var token = _authService.GenerateJwtToken(user);
-            return Ok(new { token });
+            var (token, user) = result.Value;
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    user.Username,
+                    user.Email,
+                    user.Role
+                }
+            });
         }
 
         [HttpPost("signup")]
