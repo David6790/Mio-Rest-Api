@@ -14,7 +14,7 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<Client> Clients { get; set; }
         public virtual DbSet<OccupationStatus> OccupationStatus { get; set; }
         public virtual DbSet<MenuEntity> MenuDuJour { get; set; }
-        
+        public virtual DbSet<UserEntity> Users { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,9 +30,6 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Status).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
-
-
-
             });
 
             modelBuilder.Entity<MenuEntity>(entity =>
@@ -51,24 +48,23 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Prenom).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Telephone).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Email).HasMaxLength(255).IsUnicode(true);
-
-
-
             });
-
-         
 
             modelBuilder.Entity<OccupationStatus>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.OccStatus).HasMaxLength(20).IsUnicode(true);
-                
-
             });
 
-
+            // Configuration de l'entité User
+            modelBuilder.Entity<UserEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Password).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
+            });
         }
     }
-
-
 }
