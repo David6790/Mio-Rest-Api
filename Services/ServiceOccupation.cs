@@ -15,6 +15,8 @@ namespace Mio_Rest_Api.Services
         Task<List<OccupationStatus>> GetAllOccupationStatus();
         Task<(List<OccupationStatus>, bool)> AddOccupationStatus(OccupationDTO occupationDTO);
         Task<OccupationStatusDetailDTO> GetOccupationStatusByDate(DateOnly date);
+        Task<OccupationStatus> DeleteOccupationStatus(int id);
+        Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatus);
     }
 
     public class ServiceOccupation : IServiceOccupation
@@ -28,12 +30,20 @@ namespace Mio_Rest_Api.Services
 
         public async Task<List<OccupationStatus>> GetAllOccupationStatus()
         {
-            // No TimeSlots loaded here, only OccupationStatuses
-            return await _context.OccupationStatus.ToListAsync();
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            // Filter the OccupationStatuses to only include those with a DateOfEffect equal to or greater than today
+            return await _context.OccupationStatus
+                                 .Where(os => os.DateOfEffect >= today)
+                                 .ToListAsync();
         }
 
         public async Task<(List<OccupationStatus>, bool)> AddOccupationStatus(OccupationDTO occupationDTO)
         {
+            if (!IsValidOccupationStatus(occupationDTO.OccStatus))
+            {
+                throw new ArgumentException("Invalid occupation status value.");
+            }
+
             var dateOfEffect = DateOnly.ParseExact(occupationDTO.DateOfEffect, "yyyy-MM-dd");
             var existingStatus = await _context.OccupationStatus
                                                .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
@@ -55,6 +65,7 @@ namespace Mio_Rest_Api.Services
             return (new List<OccupationStatus> { newOccupationStatus }, false);
         }
 
+
         public async Task<OccupationStatusDetailDTO> GetOccupationStatusByDate(DateOnly date)
         {
             var occupationStatus = await _context.OccupationStatus
@@ -69,6 +80,39 @@ namespace Mio_Rest_Api.Services
                 TimeSlots = timeSlots
             };
         }
+
+        public async Task<OccupationStatus> DeleteOccupationStatus(int id)
+        {
+            var occupationStatus = await _context.OccupationStatus.FindAsync(id);
+            if (occupationStatus == null)
+            {
+                return null; // OccupationStatus not found
+            }
+
+            _context.OccupationStatus.Remove(occupationStatus);
+            await _context.SaveChangesAsync();
+            return occupationStatus; // Return the deleted occupation status
+        }
+
+        public async Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatus)
+        {
+            if (!IsValidOccupationStatus(newOccStatus))
+            {
+                throw new ArgumentException("Invalid occupation status value.");
+            }
+
+            var occupationStatus = await _context.OccupationStatus.FindAsync(id);
+            if (occupationStatus == null)
+            {
+                return null; // OccupationStatus not found
+            }
+
+            occupationStatus.OccStatus = newOccStatus;
+            await _context.SaveChangesAsync();
+
+            return occupationStatus;
+        }
+
 
         private List<string> FilterTimeSlots(string occStatus)
         {
@@ -102,10 +146,31 @@ namespace Mio_Rest_Api.Services
                         (ts.StartsWith("12:") || ts.StartsWith("13:"))
                     ).ToList();
 
+                case "MidiComplet":
+                    // Supprime tout les horaires allant de 12:00 à 13:45
+                    return TimeSlotConfig.TimeSlots.Where(ts =>
+                        !ts.StartsWith("12:") && !ts.StartsWith("13:")
+                    ).ToList();
+
                 default:
                     // Aucun créneau disponible
                     return new List<string>();
             }
+        }
+
+        private bool IsValidOccupationStatus(string occStatus)
+        {
+            var validStatuses = new HashSet<string>
+            {
+                "RAS",
+                "FreeTable21",
+                "Service1Complet",
+                "Service2Complet",
+                "Complet",
+                "MidiComplet"
+            };
+
+            return validStatuses.Contains(occStatus);
         }
 
     }
