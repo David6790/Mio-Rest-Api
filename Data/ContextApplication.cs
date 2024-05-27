@@ -14,7 +14,9 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<Client> Clients { get; set; }
         public virtual DbSet<OccupationStatus> OccupationStatus { get; set; }
         public virtual DbSet<MenuEntity> MenuDuJour { get; set; }
-        public virtual DbSet<UserEntity> Users { get; set; } 
+        public virtual DbSet<UserEntity> Users { get; set; }
+        public virtual DbSet<Table> Tables { get; set; }
+        public virtual DbSet<Assignation> Assignations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,7 +31,9 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.IsPowerUser).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.Status).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
-                entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
+                entity.HasOne(e => e.Client)
+                      .WithMany(c => c.Reservations)
+                      .HasForeignKey(e => e.IdClient);
             });
 
             modelBuilder.Entity<MenuEntity>(entity =>
@@ -56,7 +60,6 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.OccStatus).HasMaxLength(20).IsUnicode(true);
             });
 
-            // Configuration de l'entité User
             modelBuilder.Entity<UserEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -64,8 +67,29 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Password).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
-                entity.Property(e=> e.Nom).HasMaxLength(200).IsUnicode(true);
-                entity.Property(e=> e.Prenom).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e => e.Nom).HasMaxLength(200).IsUnicode(true);
+                entity.Property(e => e.Prenom).HasMaxLength(200).IsUnicode(true);
+            });
+
+            modelBuilder.Entity<Table>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.NumeroTable).IsRequired();
+            });
+
+            modelBuilder.Entity<Assignation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Date).IsRequired();
+                entity.Property(e => e.Periode).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.HeureDebut).IsRequired();
+                entity.Property(e => e.HeureFin).IsRequired();
+                entity.HasOne(a => a.Reservation)
+                      .WithMany(r => r.Assignations)
+                      .HasForeignKey(a => a.ReservationId);
+                entity.HasOne(a => a.Table)
+                      .WithMany(t => t.Assignations)
+                      .HasForeignKey(a => a.TableId);
             });
         }
     }

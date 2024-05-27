@@ -25,6 +25,7 @@ namespace Mio_Rest_Api
             builder.Services.AddScoped<IServiceOccupation, ServiceOccupation>();
             builder.Services.AddScoped<IServiceMenuDuJour, ServiceMenuDuJour>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IServiceAssignation, ServiceAssignation>();
 
             // Configure JWT authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
