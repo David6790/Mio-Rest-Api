@@ -9,6 +9,7 @@
         public string OccupationStatusOnBook { get; set; } = string.Empty;
         public string CreatedBy { get; set; }=string.Empty ;
         public string FreeTable21 { get; set; } = "Pas nécéssaire";
+        public string UpdatedBy { get; set; } = string.Empty;
 
 
         public string ClientName { get; set; }=string.Empty;

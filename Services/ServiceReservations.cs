@@ -120,6 +120,8 @@ namespace Mio_Rest_Api.Services
             reservation.Comment = reservationDTO.Comment;
             reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
             reservation.FreeTable21 = reservationDTO.FreeTable21;
+            reservation.CreatedBy = reservationDTO.CreatedBy;
+            reservation.UpdatedBy = reservationDTO.UpdatedBy;
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
