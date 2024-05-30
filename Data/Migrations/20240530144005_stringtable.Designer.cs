@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    partial class ContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20240530144005_stringtable")]
+    partial class stringtable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,43 @@ namespace Mio_Rest_Api.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.Assignation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly>("HeureDebut")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("HeureFin")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Periode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TableId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReservationId");
+
+                    b.HasIndex("TableId");
+
+                    b.ToTable("Assignations");
+                });
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.Client", b =>
                 {
@@ -128,9 +168,6 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Comment")
                         .HasMaxLength(1000)
                         .IsUnicode(true)
@@ -197,11 +234,26 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("IdClient");
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.Table", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("NumeroTable")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tables");
                 });
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.UserEntity", b =>
@@ -249,14 +301,29 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Mio_Rest_Api.Entities.Assignation", b =>
+                {
+                    b.HasOne("Mio_Rest_Api.Entities.ReservationEntity", "Reservation")
+                        .WithMany("Assignations")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mio_Rest_Api.Entities.Table", "Table")
+                        .WithMany("Assignations")
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("Table");
+                });
+
             modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
-                    b.HasOne("Mio_Rest_Api.Entities.Client", null)
-                        .WithMany("Reservations")
-                        .HasForeignKey("ClientId");
-
                     b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
-                        .WithMany()
+                        .WithMany("Reservations")
                         .HasForeignKey("IdClient")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -267,6 +334,16 @@ namespace Mio_Rest_Api.Data.Migrations
             modelBuilder.Entity("Mio_Rest_Api.Entities.Client", b =>
                 {
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
+                {
+                    b.Navigation("Assignations");
+                });
+
+            modelBuilder.Entity("Mio_Rest_Api.Entities.Table", b =>
+                {
+                    b.Navigation("Assignations");
                 });
 #pragma warning restore 612, 618
         }

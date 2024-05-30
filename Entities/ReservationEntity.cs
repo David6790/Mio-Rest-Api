@@ -21,8 +21,7 @@
         // Propriété de navigation pour le client
         public virtual Client Client { get; set; } = null!;
 
-        // Propriété de navigation pour les assignations
-        public virtual ICollection<Assignation> Assignations { get; set; } = new List<Assignation>();
+      
     }
 
     public class Client
@@ -38,33 +37,8 @@
         public virtual ICollection<ReservationEntity> Reservations { get; set; } = new List<ReservationEntity>();
     }
 
-    public class Table
-    {
-        public int Id { get; set; }
-        public int NumeroTable { get; set; }
 
-        // Propriété de navigation pour les assignations
-        public virtual ICollection<Assignation> Assignations { get; set; } = new List<Assignation>();
-    }
 
-    public class Assignation
-    {
-        public int Id { get; set; }
-        public int ReservationId { get; set; }
-
-        // Propriété de navigation pour la réservation
-        public virtual ReservationEntity Reservation { get; set; } = null!;
-
-        public int TableId { get; set; }
-
-        // Propriété de navigation pour la table
-        public virtual Table Table { get; set; } = null!;
-
-        public DateOnly Date { get; set; }
-        public string Periode { get; set; } = string.Empty;
-        public TimeOnly HeureDebut { get; set; }
-        public TimeOnly HeureFin { get; set; }
-    }
 
     public class OccupationStatus
     {

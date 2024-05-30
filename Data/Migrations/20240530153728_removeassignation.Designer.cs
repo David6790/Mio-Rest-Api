@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    partial class ContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20240530153728_removeassignation")]
+    partial class removeassignation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,9 +131,6 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Comment")
                         .HasMaxLength(1000)
                         .IsUnicode(true)
@@ -197,8 +197,6 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("IdClient");
 
                     b.ToTable("Reservations");
@@ -251,12 +249,8 @@ namespace Mio_Rest_Api.Data.Migrations
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.ReservationEntity", b =>
                 {
-                    b.HasOne("Mio_Rest_Api.Entities.Client", null)
-                        .WithMany("Reservations")
-                        .HasForeignKey("ClientId");
-
                     b.HasOne("Mio_Rest_Api.Entities.Client", "Client")
-                        .WithMany()
+                        .WithMany("Reservations")
                         .HasForeignKey("IdClient")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

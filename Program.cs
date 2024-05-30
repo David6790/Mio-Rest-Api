@@ -7,7 +7,7 @@ using Mio_Rest_Api.Data;
 using Mio_Rest_Api.Services;
 using System.Text.Json.Serialization;
 
-// ... other using directives ...
+
 
 namespace Mio_Rest_Api
 {
@@ -25,7 +25,7 @@ namespace Mio_Rest_Api
             builder.Services.AddScoped<IServiceOccupation, ServiceOccupation>();
             builder.Services.AddScoped<IServiceMenuDuJour, ServiceMenuDuJour>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IServiceAssignation, ServiceAssignation>();
+            
 
             // Configure JWT authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
