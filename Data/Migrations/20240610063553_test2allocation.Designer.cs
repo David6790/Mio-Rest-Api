@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    partial class ContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20240610063553_test2allocation")]
+    partial class test2allocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,12 +36,6 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
-                    b.Property<string>("IsMultiTable")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(1)");
-
                     b.Property<string>("Period")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -57,7 +54,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.HasIndex("TableId", "Date", "Period")
                         .IsUnique();
 
-                    b.ToTable("Allocations");
+                    b.ToTable("Allocation");
                 });
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.Client", b =>
@@ -261,7 +258,7 @@ namespace Mio_Rest_Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tables");
+                    b.ToTable("TableEntity");
                 });
 
             modelBuilder.Entity("Mio_Rest_Api.Entities.UserEntity", b =>

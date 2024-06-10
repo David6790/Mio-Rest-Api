@@ -15,6 +15,8 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<OccupationStatus> OccupationStatus { get; set; }
         public virtual DbSet<MenuEntity> MenuDuJour { get; set; }
         public virtual DbSet<UserEntity> Users { get; set; }
+        public virtual DbSet<TableEntity> Tables { get; set; }
+        public virtual DbSet<Allocation> Allocations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,6 +68,32 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.Nom).HasMaxLength(200).IsUnicode(true);
                 entity.Property(e => e.Prenom).HasMaxLength(200).IsUnicode(true);
+
+
+            }); modelBuilder.Entity<TableEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(50).IsUnicode(true);
+                entity.Property(e => e.Capacity).IsRequired();
+                
+            });
+
+            modelBuilder.Entity<Allocation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Period).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.IsMultiTable).HasMaxLength(1).IsUnicode(true);
+                entity.HasOne(e => e.Reservation)
+                    .WithMany(r => r.Allocations)
+                    .HasForeignKey(e => e.ReservationId);
+
+                entity.HasOne(e => e.Table)
+                    .WithMany(t => t.Allocations)
+                    .HasForeignKey(e => e.TableId);
+
+                // Contrainte d'unicité composite sur TableId, Date, et Period
+                entity.HasIndex(e => new { e.TableId, e.Date, e.Period })
+                    .IsUnique();
             });
         }
     }

@@ -20,8 +20,12 @@
 
         // Propriété de navigation pour le client
         public virtual Client Client { get; set; } = null!;
+        // Propriété de navigation pour les allocations
+        public virtual ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
 
-      
+
+
+
     }
 
     public class Client
@@ -35,6 +39,7 @@
 
         // Propriété de navigation pour les réservations
         public virtual ICollection<ReservationEntity> Reservations { get; set; } = new List<ReservationEntity>();
+        
     }
 
 
@@ -46,4 +51,32 @@
         public DateOnly DateOfEffect { get; set; }
         public string OccStatus { get; set; } = "RAS";
     }
+
+
+    public class TableEntity
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Capacity { get; set; } // Nombre de personnes que la table peut accueillir
+        
+
+        // Propriétés de navigation
+        public virtual ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
+    }
+
+    public class Allocation
+    {
+        public int Id { get; set; }
+        public int ReservationId { get; set; }
+        public int TableId { get; set; }
+        public DateOnly Date { get; set; }
+        public string Period { get; set; } // "Midi" ou "Soir"
+        public string IsMultiTable { get; set; } = "N";
+
+        // Propriétés de navigation
+        public virtual ReservationEntity Reservation { get; set; } = null!;
+        public virtual TableEntity Table { get; set; } = null!;
+    }
+
+
 }
