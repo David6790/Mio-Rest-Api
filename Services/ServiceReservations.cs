@@ -10,10 +10,12 @@ namespace Mio_Rest_Api.Services
     public interface IServiceReservation
     {
         Task<List<ReservationEntity>> GetAllReservations();
+        Task<List<ReservationEntity>> GetFuturReservations();
         Task<ReservationEntity?> GetReservation(int id);
         Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO);
         Task<List<ReservationEntity>> GetReservationsByDate(string date);
         Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO);
+        Task<ReservationEntity?> ValidateReservation(int id);
 
 
     }
@@ -31,6 +33,13 @@ namespace Mio_Rest_Api.Services
         public async Task<List<ReservationEntity>> GetAllReservations()
         {
             return await _contexte.Reservations.Include(r => r.Client).ToListAsync();
+        }
+
+        public async Task<List<ReservationEntity>> GetFuturReservations()
+        {
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+            return await _contexte.Reservations.Include(r => r.Client).Where(r => r.DateResa >= today).ToListAsync();
         }
 
         public async Task<ReservationEntity?> GetReservation(int id)
@@ -122,6 +131,20 @@ namespace Mio_Rest_Api.Services
             reservation.FreeTable21 = reservationDTO.FreeTable21;
             reservation.CreatedBy = reservationDTO.CreatedBy;
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
+
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+
+            return reservation;
+        }
+
+        public async Task<ReservationEntity?> ValidateReservation(int id)
+        {
+            var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
+
+            if (reservation == null) { return null; }
+
+            reservation.Status = "C";
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();

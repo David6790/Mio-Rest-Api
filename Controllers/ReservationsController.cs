@@ -39,6 +39,23 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        // GET: api/Reservations
+        [HttpGet("futur")]
+        public async Task<ActionResult<IEnumerable<ReservationEntity>>> GetFuturReservations()
+        {
+            try
+            {
+                var reservations = await _serviceReservations.GetFuturReservations();
+                return Ok(reservations);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+
+            }
+        }
+
         // GET: api/Reservations/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ReservationEntity>> GetReservation(int id)
@@ -125,6 +142,27 @@ namespace Mio_Rest_Api.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> PatchReservationStatus(int id)
+        {
+            try
+            {
+                var updatedReservation = await _serviceReservations.ValidateReservation(id);
+                if (updatedReservation == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(updatedReservation);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
 
         //// PUT: api/Reservations/5
