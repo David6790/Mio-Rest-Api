@@ -16,6 +16,7 @@ namespace Mio_Rest_Api.Services
         Task<List<ReservationEntity>> GetReservationsByDate(string date);
         Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO);
         Task<ReservationEntity?> ValidateReservation(int id);
+        Task<ReservationEntity?> AnnulerReservation(int id, string u);
 
 
     }
@@ -131,6 +132,7 @@ namespace Mio_Rest_Api.Services
             reservation.FreeTable21 = reservationDTO.FreeTable21;
             reservation.CreatedBy = reservationDTO.CreatedBy;
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
+            reservation.UpdateTimeStamp = DateTime.Now;
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
@@ -152,6 +154,22 @@ namespace Mio_Rest_Api.Services
             return reservation;
         }
 
+        public async Task<ReservationEntity?> AnnulerReservation(int id, string user)
+        {
+            var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
+
+            if (reservation == null) { return null; };
+
+            reservation.Status = "A";
+            reservation.CanceledBy = user;
+            reservation.Placed = "N";
+            reservation.CanceledTimeStamp = DateTime.Now;
+
+            _contexte.Reservations.Update(reservation);
+
+            await _contexte.SaveChangesAsync();
+            return reservation;
+        }
 
     }
 }

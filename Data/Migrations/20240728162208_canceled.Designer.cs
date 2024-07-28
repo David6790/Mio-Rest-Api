@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    partial class ContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20240728162208_canceled")]
+    partial class canceled
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,9 +173,6 @@ namespace Mio_Rest_Api.Data.Migrations
                         .HasMaxLength(50)
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("CanceledTimeStamp")
-                        .HasColumnType("datetime2");
 
                     b.Property<int?>("ClientId")
                         .HasColumnType("int");

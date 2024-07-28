@@ -8,9 +8,11 @@
         public TimeOnly TimeResa { get; set; }
         public int NumberOfGuest { get; set; }
         public DateTime CreaTimeStamp { get; set; } = DateTime.Now;
-        public DateTime? UpdateTimeStamp { get; set; } = DateTime.Now;
+        public DateTime? UpdateTimeStamp { get; set; }
+        public DateTime? CanceledTimeStamp { get; set; } 
         public string CreatedBy { get; set; } = string.Empty;
         public string? UpdatedBy { get; set; }
+        public string? CanceledBy { get; set; }
         public string? Comment { get; set; }
         public string Placed { get; set; } = "N";
         public string IsPowerUser { get; set; } = "N";

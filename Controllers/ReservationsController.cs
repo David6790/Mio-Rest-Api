@@ -143,7 +143,7 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
-        [HttpPatch("{id}/status")]
+        [HttpPatch("{id}/validate")]
         public async Task<IActionResult> PatchReservationStatus(int id)
         {
             try
@@ -158,11 +158,31 @@ namespace Mio_Rest_Api.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception here if you have a logging framework
+                // Log the exception here if you have a logging framework 
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
+
+        [HttpPatch("{id}/cancel/{user}")]
+        public async Task<IActionResult> CancelReservationStatus(int id, string user)
+        {
+            try
+            {
+                var updatedReservation = await _serviceReservations.AnnulerReservation(id, user);
+                if (updatedReservation == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(updatedReservation);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework 
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
 
         //// PUT: api/Reservations/5
