@@ -40,7 +40,7 @@ namespace Mio_Rest_Api.Services
         {
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
 
-            return await _contexte.Reservations.Include(r => r.Client).Where(r => r.DateResa >= today).ToListAsync();
+            return await _contexte.Reservations.Include(r => r.Client).Where(r => r.DateResa >= today).OrderByDescending(r=> r.CreaTimeStamp).ToListAsync();
         }
 
         public async Task<ReservationEntity?> GetReservation(int id)

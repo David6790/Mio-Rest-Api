@@ -45,6 +45,13 @@ namespace Mio_Rest_Api.Services
                 };
 
                 _context.Allocations.Add(allocation);
+                var reservation = _context.Reservations
+                    .FirstOrDefault(r => r.Id == requestDto.ReservationId);
+                if (reservation != null)
+                {
+                    reservation.Placed = "O";
+                    _context.SaveChanges();
+                }
             }
 
             try
