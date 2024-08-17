@@ -4,10 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
-using Mio_Rest_Api.Entities;
 using Mio_Rest_Api.Services;
 
 namespace Mio_Rest_Api.Controllers
@@ -29,7 +26,7 @@ namespace Mio_Rest_Api.Controllers
             try
             {
                 _allocationService.CreateAllocation(request);
-                return Ok();
+                return Ok(new { message = "Allocations créée avec succès" });
             }
             catch (InvalidOperationException ex)
             {
@@ -40,7 +37,6 @@ namespace Mio_Rest_Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
 
         [HttpGet]
         public IActionResult GetAllocations([FromQuery] string date, [FromQuery] string period)
@@ -60,6 +56,20 @@ namespace Mio_Rest_Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    }
 
+        [HttpDelete("deleteByReservation/{reservationId}")]
+        public IActionResult DeleteAllocationsByReservationId(int reservationId)
+        {
+            try
+            {
+                _allocationService.DeleteAllocations(reservationId);
+                return Ok(new { message = "Allocations supprimées avec succès, si elles existaient." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+            }
+        }
+
+    }
 }
