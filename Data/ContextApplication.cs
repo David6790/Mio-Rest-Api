@@ -78,7 +78,6 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Capacity).IsRequired();
                 
             });
-
             modelBuilder.Entity<Allocation>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -92,10 +91,9 @@ namespace Mio_Rest_Api.Data
                     .WithMany(t => t.Allocations)
                     .HasForeignKey(e => e.TableId);
 
-                // Contrainte d'unicité composite sur TableId, Date, et Period
-                entity.HasIndex(e => new { e.TableId, e.Date, e.Period })
-                    .IsUnique();
+                // Suppression de l'index unique
             });
+
         }
     }
 }

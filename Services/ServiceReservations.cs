@@ -16,6 +16,7 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO);
         Task<ReservationEntity?> ValidateReservation(int id);
         Task<ReservationEntity?> AnnulerReservation(int id, string u);
+        Task<ReservationEntity?> RefuserReservation(int id, string u);
     }
 
     public class ServiceReservations : IServiceReservation
@@ -83,7 +84,7 @@ namespace Mio_Rest_Api.Services
 
             if (reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet")
             {
-                reservationDTO.FreeTable21 = "Clients prévénus";
+                reservationDTO.FreeTable21 = "O";
             }
 
             ReservationEntity reservation = new ReservationEntity
@@ -155,6 +156,26 @@ namespace Mio_Rest_Api.Services
 
             // Mise à jour du statut de la réservation
             reservation.Status = "A";
+            reservation.CanceledBy = user;
+            reservation.Placed = "N";
+            reservation.CanceledTimeStamp = DateTime.Now;
+
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+
+            return reservation;
+        }
+
+        public async Task<ReservationEntity?> RefuserReservation(int id, string user)
+        {
+            var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
+            if (reservation == null) { return null; }
+
+            // Supprimer les allocations liées à cette réservation
+            _allocationService.DeleteAllocations(id);
+
+            // Mise à jour du statut de la réservation
+            reservation.Status = "R";
             reservation.CanceledBy = user;
             reservation.Placed = "N";
             reservation.CanceledTimeStamp = DateTime.Now;

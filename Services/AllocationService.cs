@@ -30,9 +30,42 @@ public class AllocationService : IAllocationService
 
         bool isMultiTable = requestDto.TableId.Count > 1;
 
+        // Récupérer la réservation associée pour obtenir timeResa et FreeTable21
+        var reservation = _context.Reservations
+            .FirstOrDefault(r => r.Id == requestDto.ReservationId);
+
+        if (reservation == null)
+        {
+            throw new InvalidOperationException("Réservation introuvable.");
+        }
+
+        // Utilisation du timeResa de la réservation
+        TimeOnly timeResa = reservation.TimeResa;
+
         foreach (var tableId in requestDto.TableId)
         {
-            var allocation = new Allocation
+            // Vérification des allocations existantes pour la même table, date et période
+            var existingAllocations = _context.Allocations
+                .Include(a => a.Reservation)
+                .Where(a => a.TableId == tableId && a.Date == date && a.Period == requestDto.Period)
+                .ToList();
+
+            foreach (var allocation in existingAllocations)
+            {
+                var existingReservation = allocation.Reservation;
+                if (existingReservation != null)
+                {
+                    // Si la table est occupée sans libération à 21h et que la nouvelle réservation est avant 21h
+                    TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
+                    if (existingReservation.FreeTable21 != "O" || timeResa < freeTableThreshold)
+                    {
+                        throw new InvalidOperationException("La table est déjà allouée pour la date et la période spécifiées.");
+                    }
+                }
+            }
+
+            // Si aucune collision, créer la nouvelle allocation
+            var newAllocation = new Allocation
             {
                 ReservationId = requestDto.ReservationId,
                 TableId = tableId,
@@ -41,16 +74,12 @@ public class AllocationService : IAllocationService
                 IsMultiTable = isMultiTable ? "Y" : "N"
             };
 
-            _context.Allocations.Add(allocation);
-            var reservation = _context.Reservations
-                .FirstOrDefault(r => r.Id == requestDto.ReservationId);
-            if (reservation != null)
-            {
-                reservation.Placed = "O";
-                _context.Reservations.Update(reservation);
-                _context.SaveChanges();
-            }
+            _context.Allocations.Add(newAllocation);
         }
+
+        // Mettre à jour la réservation associée pour indiquer qu'elle est placée
+        reservation.Placed = "O";
+        _context.Reservations.Update(reservation);
 
         try
         {
@@ -65,6 +94,7 @@ public class AllocationService : IAllocationService
             throw;
         }
     }
+
 
     public void DeleteAllocations(int reservationId)
     {

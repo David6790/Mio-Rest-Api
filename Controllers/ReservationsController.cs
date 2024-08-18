@@ -185,6 +185,27 @@ namespace Mio_Rest_Api.Controllers
         }
 
 
+        [HttpPatch("{id}/refuse/{user}")]
+        public async Task<IActionResult> RefuserReservationStatus(int id, string user)
+        {
+            try
+            {
+                var updatedReservation = await _serviceReservations.RefuserReservation(id, user);
+                if (updatedReservation == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(updatedReservation);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework 
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
         //// PUT: api/Reservations/5
         //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //[HttpPut("{id}")]

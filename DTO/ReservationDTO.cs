@@ -8,7 +8,7 @@
         public string? Comment { get; set; }
         public string OccupationStatusOnBook { get; set; } = string.Empty;
         public string CreatedBy { get; set; }=string.Empty ;
-        public string FreeTable21 { get; set; } = "Pas nécéssaire";
+        public string FreeTable21 { get; set; } = "N";
         public string UpdatedBy { get; set; } = string.Empty;
         public string CanceledBy { get; set; } = string.Empty;
 
