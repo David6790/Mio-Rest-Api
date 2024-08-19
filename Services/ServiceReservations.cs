@@ -82,7 +82,7 @@ namespace Mio_Rest_Api.Services
             }
             await _contexte.SaveChangesAsync();
 
-            if (reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet")
+            if ((reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
             {
                 reservationDTO.FreeTable21 = "O";
             }
@@ -107,6 +107,21 @@ namespace Mio_Rest_Api.Services
 
         public async Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO)
         {
+            // Vérification des champs obligatoires
+            if (string.IsNullOrWhiteSpace(reservationDTO.DateResa))
+            {
+                throw new ArgumentException("La date de réservation est obligatoire.", nameof(reservationDTO.DateResa));
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.TimeResa))
+            {
+                throw new ArgumentException("L'heure de réservation est obligatoire.", nameof(reservationDTO.DateResa));
+            }
+
+            if (reservationDTO.NumberOfGuest <= 0)
+            {
+                throw new ArgumentException("Le nombre de personnes doit être supérieur à zéro.", nameof(reservationDTO.NumberOfGuest));
+            }
+
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
             if (reservation == null)
             {
@@ -133,6 +148,7 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+
 
         public async Task<ReservationEntity?> ValidateReservation(int id)
         {

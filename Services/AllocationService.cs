@@ -50,6 +50,12 @@ public class AllocationService : IAllocationService
                 .Where(a => a.TableId == tableId && a.Date == date && a.Period == requestDto.Period)
                 .ToList();
 
+            // Vérification du nombre d'allocations existantes pour cette table
+            if (existingAllocations.Count >= 2)
+            {
+                throw new InvalidOperationException("La table a déjà atteint la limite d'allocations pour la date et la période spécifiées.");
+            }
+
             foreach (var allocation in existingAllocations)
             {
                 var existingReservation = allocation.Reservation;
@@ -59,7 +65,7 @@ public class AllocationService : IAllocationService
                     TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
                     if (existingReservation.FreeTable21 != "O" || timeResa < freeTableThreshold)
                     {
-                        throw new InvalidOperationException("La table est déjà allouée pour la date et la période spécifiées.");
+                        throw new InvalidOperationException("La table n'est libre qu'à partir de 21h. Vous ne pouvez pas allouer une réservation arrivant avant 21h");
                     }
                 }
             }
@@ -94,6 +100,7 @@ public class AllocationService : IAllocationService
             throw;
         }
     }
+
 
 
     public void DeleteAllocations(int reservationId)

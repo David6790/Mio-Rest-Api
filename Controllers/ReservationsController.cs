@@ -117,14 +117,12 @@ namespace Mio_Rest_Api.Controllers
 
         // PUT: api/Reservations/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutReservation(int id, ReservationDTO reservationDTO)
+        public async Task<IActionResult> PutReservation(int id, [FromBody] ReservationDTO reservationDTO)
         {
             if (reservationDTO == null)
             {
                 return BadRequest("Reservation data must be provided");
             }
-
-
 
             try
             {
@@ -136,12 +134,23 @@ namespace Mio_Rest_Api.Controllers
 
                 return Ok(updatedReservation);
             }
+            catch (ArgumentException ex)
+            {
+                // Retourne le message d'erreur capturé par le service
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Retourne le message d'erreur capturé par le service
+                return Conflict(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
-                // Log the exception here if you have a logging framework
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                // Retourne un message d'erreur générique pour toute autre exception
+                return StatusCode(500, new { error = $"Internal server error: {ex.Message}" });
             }
         }
+
 
         [HttpPatch("{id}/validate")]
         public async Task<IActionResult> PatchReservationStatus(int id)

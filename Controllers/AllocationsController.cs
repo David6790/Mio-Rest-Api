@@ -26,17 +26,25 @@ namespace Mio_Rest_Api.Controllers
             try
             {
                 _allocationService.CreateAllocation(request);
-                return Ok(new { message = "Allocations créée avec succès" });
+                return Ok(new { message = "Allocation créée avec succès" });
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(ex.Message);
+                // Conflict (409) est utilisé pour indiquer qu'il y a un conflit avec l'état actuel de la ressource
+                return Conflict(new { error = ex.Message });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                // BadRequest (400) est utilisé pour indiquer une requête incorrecte (par exemple, format de date invalide)
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // InternalServerError (500) pour les erreurs générales non gérées
+                return StatusCode(500, new { error = "Une erreur interne est survenue.", details = ex.Message });
             }
         }
+
 
         [HttpGet]
         public IActionResult GetAllocations([FromQuery] string date, [FromQuery] string period)
