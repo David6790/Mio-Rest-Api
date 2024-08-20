@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
@@ -31,24 +30,31 @@ namespace Mio_Rest_Api.Services
             _allocationService = allocationService;
         }
 
+        #region GetAllReservations
         public async Task<List<ReservationEntity>> GetAllReservations()
         {
             return await _contexte.Reservations.Include(r => r.Client).ToListAsync();
         }
+        #endregion
 
+        #region GetFuturReservations
         public async Task<List<ReservationEntity>> GetFuturReservations()
         {
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
             return await _contexte.Reservations.Include(r => r.Client).Where(r => r.DateResa >= today).OrderByDescending(r => r.CreaTimeStamp).ToListAsync();
         }
+        #endregion
 
+        #region GetReservation
         public async Task<ReservationEntity?> GetReservation(int id)
         {
             return await _contexte.Reservations
                 .Include(r => r.Client)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
+        #endregion
 
+        #region GetReservationsByDate
         public async Task<List<ReservationEntity>> GetReservationsByDate(string date)
         {
             return await _contexte.Reservations
@@ -57,9 +63,61 @@ namespace Mio_Rest_Api.Services
                 .OrderByDescending(r => r.CreaTimeStamp)
                 .ToListAsync();
         }
+        #endregion
 
+        #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
         {
+            // Vérification des champs obligatoires
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientName))
+            {
+                throw new ArgumentException("Le nom ne peut pas être vide.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientPrenom))
+            {
+                throw new ArgumentException("Le prénom ne peut pas être vide.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.DateResa))
+            {
+                throw new ArgumentException("La date de réservation est obligatoire.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.TimeResa))
+            {
+                throw new ArgumentException("L'heure de réservation est obligatoire.");
+            }
+            if (reservationDTO.NumberOfGuest <= 0)
+            {
+                throw new ArgumentException("Le nombre de personnes doit être un entier positif et non nul.");
+            }
+
+            // Validation de la date et de l'heure
+            DateOnly reservationDate = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
+            TimeOnly reservationTime = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
+
+            if (reservationDate < today)
+            {
+                throw new ArgumentException("La date de réservation ne peut pas être dans le passé.");
+            }
+            else if (reservationDate == today && reservationTime < now)
+            {
+                throw new ArgumentException("Vous ne pouvez pas réserver pour une heure passée aujourd'hui.");
+            }
+
+            // Validation du numéro de téléphone
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone) || !IsValidPhoneNumber(reservationDTO.ClientTelephone))
+            {
+                throw new ArgumentException("Le numéro de téléphone n'est pas valide.");
+            }
+
+            // Validation de l'email
+            if (!string.IsNullOrWhiteSpace(reservationDTO.ClientEmail) && !IsValidEmail(reservationDTO.ClientEmail))
+            {
+                throw new ArgumentException("L'adresse email n'est pas valide.");
+            }
+
             Client? client = await _contexte.Clients.FirstOrDefaultAsync(c =>
                 c.Name == reservationDTO.ClientName && c.Prenom == reservationDTO.ClientPrenom && c.Telephone == reservationDTO.ClientTelephone
             );
@@ -90,8 +148,8 @@ namespace Mio_Rest_Api.Services
             ReservationEntity reservation = new ReservationEntity
             {
                 IdClient = client.Id,
-                DateResa = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd"),
-                TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm"),
+                DateResa = reservationDate,
+                TimeResa = reservationTime,
                 NumberOfGuest = reservationDTO.NumberOfGuest,
                 Comment = reservationDTO.Comment,
                 OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
@@ -104,36 +162,78 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+        #endregion
 
+        #region UpdateReservation
         public async Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO)
         {
             // Vérification des champs obligatoires
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientName))
+            {
+                throw new ArgumentException("Le nom ne peut pas être vide.");
+            }
+
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientPrenom))
+            {
+                throw new ArgumentException("Le prénom ne peut pas être vide.");
+            }
+
             if (string.IsNullOrWhiteSpace(reservationDTO.DateResa))
             {
-                throw new ArgumentException("La date de réservation est obligatoire.", nameof(reservationDTO.DateResa));
+                throw new ArgumentException("La date de réservation est obligatoire.");
             }
+
             if (string.IsNullOrWhiteSpace(reservationDTO.TimeResa))
             {
-                throw new ArgumentException("L'heure de réservation est obligatoire.", nameof(reservationDTO.DateResa));
+                throw new ArgumentException("L'heure de réservation est obligatoire.");
             }
 
             if (reservationDTO.NumberOfGuest <= 0)
             {
-                throw new ArgumentException("Le nombre de personnes doit être supérieur à zéro.", nameof(reservationDTO.NumberOfGuest));
+                throw new ArgumentException("Le nombre de personnes doit être supérieur à zéro.");
             }
 
+            // Validation du numéro de téléphone
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone) || !IsValidPhoneNumber(reservationDTO.ClientTelephone))
+            {
+                throw new ArgumentException("Le numéro de téléphone n'est pas valide.");
+            }
+
+            // Validation de l'email
+            if (!string.IsNullOrWhiteSpace(reservationDTO.ClientEmail) && !IsValidEmail(reservationDTO.ClientEmail))
+            {
+                throw new ArgumentException("L'adresse email fournie est invalide.");
+            }
+
+            // Validation de la date et de l'heure
+            DateOnly reservationDate = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
+            TimeOnly reservationTime = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
+
+            if (reservationDate < today)
+            {
+                throw new ArgumentException("Vous ne pouvez pas réserver pour une date passée.");
+            }
+
+            if (reservationDate == today && reservationTime < now)
+            {
+                throw new ArgumentException("Vous ne pouvez pas réserver pour une heure passée aujourd'hui.");
+            }
+
+            // Rechercher la réservation existante
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
             if (reservation == null)
             {
-                return null;
+                return null; // ou lever une exception si vous préférez
             }
 
             // Supprimer les allocations liées à cette réservation
             _allocationService.DeleteAllocations(id);
 
             // Mise à jour des informations de la réservation
-            reservation.DateResa = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
-            reservation.TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            reservation.DateResa = reservationDate;
+            reservation.TimeResa = reservationTime;
             reservation.NumberOfGuest = reservationDTO.NumberOfGuest;
             reservation.Comment = reservationDTO.Comment;
             reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
@@ -148,8 +248,9 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+        #endregion
 
-
+        #region ValidateReservation
         public async Task<ReservationEntity?> ValidateReservation(int id)
         {
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
@@ -161,7 +262,9 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+        #endregion
 
+        #region AnnulerReservation
         public async Task<ReservationEntity?> AnnulerReservation(int id, string user)
         {
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
@@ -181,7 +284,9 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+        #endregion
 
+        #region RefuserReservation
         public async Task<ReservationEntity?> RefuserReservation(int id, string user)
         {
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
@@ -201,5 +306,31 @@ namespace Mio_Rest_Api.Services
 
             return reservation;
         }
+        #endregion
+
+        #region Validation Helpers
+
+        // Méthode pour valider le format de l'email
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Méthode pour valider le format du numéro de téléphone
+        private bool IsValidPhoneNumber(string phoneNumber)
+        {
+            // Implémentez la validation de numéro de téléphone selon vos besoins
+            return true; // Modifiez cette logique selon les besoins de votre projet
+        }
+
+        #endregion
     }
 }

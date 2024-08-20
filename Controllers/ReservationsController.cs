@@ -108,12 +108,18 @@ namespace Mio_Rest_Api.Controllers
                 var reservation = await _serviceReservations.CreateReservation(reservationDTO);
                 return CreatedAtAction(nameof(GetReservation), new { id = reservation.Id }, reservation);
             }
+            catch (ArgumentException ex)
+            {
+                // Retourne un message d'erreur approprié pour les exceptions liées aux arguments invalides
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
-                // Log l'exception si nécessaire et retourne une réponse appropriée
+                // Log l'exception si nécessaire et retourne une réponse appropriée pour les erreurs internes
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
 
         // PUT: api/Reservations/5
         [HttpPut("{id}")]
