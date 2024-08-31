@@ -9,6 +9,8 @@ public interface IAllocationService
     void CreateAllocation(CreateAllocationRequestDto requestDto);
     List<AllocationDto> GetAllocations(DateOnly date, string period);
     void DeleteAllocations(int reservationId); // Méthode pour supprimer les allocations
+    void ChangeAllocation(ChangeAllocationRequestDto requestDto);
+
 }
 
 public class AllocationService : IAllocationService
@@ -41,6 +43,7 @@ public class AllocationService : IAllocationService
 
         // Utilisation du timeResa de la réservation
         TimeOnly timeResa = reservation.TimeResa;
+        TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
 
         foreach (var tableId in requestDto.TableId)
         {
@@ -61,11 +64,32 @@ public class AllocationService : IAllocationService
                 var existingReservation = allocation.Reservation;
                 if (existingReservation != null)
                 {
-                    // Si la table est occupée sans libération à 21h et que la nouvelle réservation est avant 21h
-                    TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
-                    if (existingReservation.FreeTable21 != "O" || timeResa < freeTableThreshold)
+                    // Vérification si l'allocation existante est après 21h
+                    bool isExistingReservationAfter21h = existingReservation.TimeResa >= freeTableThreshold;
+
+                    // Nouvelle logique pour permettre la réservation avant 21h
+                    if (timeResa < freeTableThreshold)
                     {
-                        throw new InvalidOperationException("La table n'est libre qu'à partir de 21h. Vous ne pouvez pas allouer une réservation arrivant avant 21h");
+                        if (isExistingReservationAfter21h)
+                        {
+                            // Vérifier si la réservation actuelle peut libérer la table à 21h
+                            if (reservation.FreeTable21 != "O")
+                            {
+                                throw new InvalidOperationException("La table est déjà réservée après 21h, vous ne pouvez pas ajouter cette réservation.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("La table n'est pas libre pour une réservation avant 21h.");
+                        }
+                    }
+                    else
+                    {
+                        // Si la réservation actuelle est après 21h, elle est autorisée à condition que les autres réservations libèrent la table à 21h
+                        if (!isExistingReservationAfter21h && existingReservation.FreeTable21 != "O")
+                        {
+                            throw new InvalidOperationException("La table est déjà réservée pour une période qui se chevauche avec votre réservation.");
+                        }
                     }
                 }
             }
@@ -103,6 +127,7 @@ public class AllocationService : IAllocationService
 
 
 
+
     public void DeleteAllocations(int reservationId)
     {
         var reservation = _context.Reservations.FirstOrDefault(r => r.Id == reservationId);
@@ -124,6 +149,104 @@ public class AllocationService : IAllocationService
             _context.SaveChanges();
         }
     }
+    public void ChangeAllocation(ChangeAllocationRequestDto requestDto)
+    {
+        // Étape 1 : Valider les nouvelles allocations sans modifier les allocations existantes
+        var createRequestDto = new CreateAllocationRequestDto
+        {
+            ReservationId = requestDto.ReservationId,
+            Date = requestDto.Date,
+            Period = requestDto.Period,
+            TableId = requestDto.NewTableIds
+        };
+
+        ValidateAllocation(createRequestDto);
+
+        // Étape 2 : Si la validation passe, supprimer les allocations existantes
+        DeleteAllocations(requestDto.ReservationId);
+
+        // Étape 3 : Créer de nouvelles allocations
+        CreateAllocation(createRequestDto);
+    }
+
+    private void ValidateAllocation(CreateAllocationRequestDto requestDto)
+    {
+        // Conversion de la date au format DateOnly
+        if (!DateOnly.TryParse(requestDto.Date, out var date))
+        {
+            throw new ArgumentException("Format de date invalide.");
+        }
+
+        // Récupérer la réservation actuelle à partir de la base de données
+        var reservation = _context.Reservations
+            .FirstOrDefault(r => r.Id == requestDto.ReservationId);
+
+        if (reservation == null)
+        {
+            throw new InvalidOperationException("Réservation introuvable.");
+        }
+
+        TimeOnly timeResa = reservation.TimeResa;
+        TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
+
+        foreach (var tableId in requestDto.TableId)
+        {
+            // Vérification des allocations existantes pour la même table, date et période
+            var existingAllocations = _context.Allocations
+                .Include(a => a.Reservation)
+                .Where(a => a.TableId == tableId && a.Date == date && a.Period == requestDto.Period)
+                .ToList();
+
+            // Vérification du nombre d'allocations existantes pour cette table
+            if (existingAllocations.Count >= 2)
+            {
+                throw new InvalidOperationException($"La table {tableId} a déjà atteint la limite d'allocations pour la date et la période spécifiées.");
+            }
+
+            foreach (var allocation in existingAllocations)
+            {
+                var existingReservation = allocation.Reservation;
+                if (existingReservation != null)
+                {
+                    // Vérification si l'allocation existante est après 21h
+                    bool isExistingReservationAfter21h = existingReservation.TimeResa >= freeTableThreshold;
+
+                    // Nouvelle logique pour permettre la réservation avant 21h
+                    if (timeResa < freeTableThreshold)
+                    {
+                        if (isExistingReservationAfter21h)
+                        {
+                            // Vérifier si la réservation actuelle peut libérer la table à 21h
+                            if (reservation.FreeTable21 != "O")
+                            {
+                                throw new InvalidOperationException("VV La table est déjà réservée après 21h, vous ne pouvez pas ajouter cette réservation.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("VV La table n'est pas libre pour une réservation avant 21h.");
+                        }
+                    }
+                    else
+                    {
+                        // Si la réservation actuelle est après 21h, elle est autorisée à condition que les autres réservations libèrent la table à 21h
+                        if (!isExistingReservationAfter21h && existingReservation.FreeTable21 != "O")
+                        {
+                            throw new InvalidOperationException("VV La table est déjà réservée pour une période qui se chevauche avec votre réservation.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
 
 
     public List<AllocationDto> GetAllocations(DateOnly date, string period)

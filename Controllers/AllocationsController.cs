@@ -79,5 +79,28 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        [HttpPost("change")]
+        public IActionResult ChangeAllocation([FromBody] ChangeAllocationRequestDto request)
+        {
+            try
+            {
+                _allocationService.ChangeAllocation(request);
+                return Ok(new { message = "Allocation modifiée avec succès" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Une erreur interne est survenue.", details = ex.Message });
+            }
+        }
+
+
     }
 }
