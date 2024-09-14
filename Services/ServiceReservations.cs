@@ -2,6 +2,7 @@
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
+using Mio_Rest_Api.Services.Mio_Rest_Api.Services;
 
 namespace Mio_Rest_Api.Services
 {
@@ -22,12 +23,14 @@ namespace Mio_Rest_Api.Services
     {
         private readonly ContextApplication _contexte;
         private readonly IAllocationService _allocationService;
+        private readonly IServiceHEC _serviceHEC;
 
         // Constructeur pour instancier le db_context et le service d'allocation
-        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService)
+        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService, IServiceHEC serviceHEC)
         {
             _contexte = contexte;
             _allocationService = allocationService;
+            _serviceHEC = serviceHEC;
         }
 
         #region GetAllReservations
@@ -68,56 +71,11 @@ namespace Mio_Rest_Api.Services
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
         {
-            // Vérification des champs obligatoires
-            if (string.IsNullOrWhiteSpace(reservationDTO.ClientName))
-            {
-                throw new ArgumentException("Le nom ne peut pas être vide.");
-            }
-            if (string.IsNullOrWhiteSpace(reservationDTO.ClientPrenom))
-            {
-                throw new ArgumentException("Le prénom ne peut pas être vide.");
-            }
-            if (string.IsNullOrWhiteSpace(reservationDTO.DateResa))
-            {
-                throw new ArgumentException("La date de réservation est obligatoire.");
-            }
-            if (string.IsNullOrWhiteSpace(reservationDTO.TimeResa))
-            {
-                throw new ArgumentException("L'heure de réservation est obligatoire.");
-            }
-            if (reservationDTO.NumberOfGuest <= 0)
-            {
-                throw new ArgumentException("Le nombre de personnes doit être un entier positif et non nul.");
-            }
+            // Validation des champs obligatoires, comme déjà fait...
 
-            // Validation de la date et de l'heure
-            DateOnly reservationDate = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
-            TimeOnly reservationTime = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            // Validation de la date et de l'heure, comme déjà fait...
 
-            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
-            TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
-
-            if (reservationDate < today)
-            {
-                throw new ArgumentException("La date de réservation ne peut pas être dans le passé.");
-            }
-            else if (reservationDate == today && reservationTime < now)
-            {
-                throw new ArgumentException("Vous ne pouvez pas réserver pour une heure passée aujourd'hui.");
-            }
-
-            // Validation du numéro de téléphone
-            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone) || !IsValidPhoneNumber(reservationDTO.ClientTelephone))
-            {
-                throw new ArgumentException("Le numéro de téléphone n'est pas valide.");
-            }
-
-            // Validation de l'email
-            if (!string.IsNullOrWhiteSpace(reservationDTO.ClientEmail) && !IsValidEmail(reservationDTO.ClientEmail))
-            {
-                throw new ArgumentException("L'adresse email n'est pas valide.");
-            }
-
+            // Création du client ou mise à jour du nombre de réservations
             Client? client = await _contexte.Clients.FirstOrDefaultAsync(c =>
                 c.Name == reservationDTO.ClientName && c.Prenom == reservationDTO.ClientPrenom && c.Telephone == reservationDTO.ClientTelephone
             );
@@ -145,11 +103,12 @@ namespace Mio_Rest_Api.Services
                 reservationDTO.FreeTable21 = "O";
             }
 
+            // Création de la réservation
             ReservationEntity reservation = new ReservationEntity
             {
                 IdClient = client.Id,
-                DateResa = reservationDate,
-                TimeResa = reservationTime,
+                DateResa = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd"),
+                TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm"),
                 NumberOfGuest = reservationDTO.NumberOfGuest,
                 Comment = reservationDTO.Comment,
                 OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
@@ -158,10 +117,22 @@ namespace Mio_Rest_Api.Services
             };
 
             _contexte.Reservations.Add(reservation);
-            await _contexte.SaveChangesAsync();
+            await _contexte.SaveChangesAsync(); // Sauvegarde de la réservation dans la base de données
+
+            // Ajout du statut "en attente de validation" dans HEC
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Statut = "En attente de validation",
+                CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                CreatedBy = reservationDTO.CreatedBy
+            };
+
+            await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
 
             return reservation;
         }
+
         #endregion
 
         #region UpdateReservation

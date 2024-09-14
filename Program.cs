@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.Services;
 using System.Text.Json.Serialization;
+using System.Globalization;
+using Mio_Rest_Api.Services.Mio_Rest_Api.Services;
 
 
 
@@ -19,6 +21,10 @@ namespace Mio_Rest_Api
 
             string? connect = builder.Configuration.GetConnectionString("MioConnect");
 
+            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("fr-FR");
+            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("fr-FR");
+
+
             // Add services to the container.
             builder.Services.AddDbContext<ContextApplication>(opt => opt.UseSqlServer(connect));
             builder.Services.AddScoped<IServiceReservation, ServiceReservations>();
@@ -26,6 +32,7 @@ namespace Mio_Rest_Api
             builder.Services.AddScoped<IServiceMenuDuJour, ServiceMenuDuJour>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAllocationService, AllocationService>();
+            builder.Services.AddScoped<IServiceHEC, ServiceHEC>(); // Enregistrement du service HEC
 
 
             // Configure JWT authentication

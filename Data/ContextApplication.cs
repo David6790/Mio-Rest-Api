@@ -17,6 +17,8 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<UserEntity> Users { get; set; }
         public virtual DbSet<TableEntity> Tables { get; set; }
         public virtual DbSet<Allocation> Allocations { get; set; }
+        public virtual DbSet<HECStatut> HECStatuts { get; set; } // Ajout pour HECStatut
+        public virtual DbSet<Commentaire> Commentaires { get; set; } // Ajout pour Commentaire
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -69,15 +71,15 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.Nom).HasMaxLength(200).IsUnicode(true);
                 entity.Property(e => e.Prenom).HasMaxLength(200).IsUnicode(true);
+            });
 
-
-            }); modelBuilder.Entity<TableEntity>(entity =>
+            modelBuilder.Entity<TableEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Capacity).IsRequired();
-                
             });
+
             modelBuilder.Entity<Allocation>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -90,10 +92,29 @@ namespace Mio_Rest_Api.Data
                 entity.HasOne(e => e.Table)
                     .WithMany(t => t.Allocations)
                     .HasForeignKey(e => e.TableId);
-
-                // Suppression de l'index unique
             });
 
+            // Configuration de HECStatut
+            modelBuilder.Entity<HECStatut>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Statut).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.CreatedBy).HasMaxLength(50).IsUnicode(true);
+                entity.HasOne(e => e.Reservation)
+                    .WithMany(r => r.HECStatuts)
+                    .HasForeignKey(e => e.ReservationId);
+            });
+
+            // Configuration de Commentaire
+            modelBuilder.Entity<Commentaire>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Message).HasMaxLength(2000).IsRequired(); // Longueur ajustée à 2000
+                entity.Property(e => e.Auteur).HasMaxLength(50).IsUnicode(true);
+                entity.HasOne(e => e.Reservation)
+                    .WithMany(r => r.Commentaires)
+                    .HasForeignKey(e => e.ReservationId);
+            });
         }
     }
 }
