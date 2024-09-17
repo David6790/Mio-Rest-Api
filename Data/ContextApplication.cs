@@ -28,11 +28,13 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.CreatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.UpdatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.CanceledBy).HasMaxLength(50).IsUnicode(true);
+                entity.Property(e => e.Origin).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.OccupationStatusOnBook).HasMaxLength(20).IsUnicode(true);
                 entity.Property(e => e.Comment).HasMaxLength(1000).IsUnicode(true);
                 entity.Property(e => e.Placed).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.IsPowerUser).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.Status).HasMaxLength(1).IsUnicode(false);
+                entity.Property(e => e.DoubleConfirmation).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
             });
@@ -98,7 +100,9 @@ namespace Mio_Rest_Api.Data
             modelBuilder.Entity<HECStatut>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Statut).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.Statut).HasMaxLength(255).IsRequired().IsUnicode(true);
+                entity.Property(e => e.Actions).HasMaxLength(255).IsRequired().IsUnicode(true);
+                entity.Property(e => e.Libelle).HasMaxLength(255).IsRequired().IsUnicode(true);
                 entity.Property(e => e.CreatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Reservation)
                     .WithMany(r => r.HECStatuts)

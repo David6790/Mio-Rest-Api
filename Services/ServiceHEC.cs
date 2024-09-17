@@ -12,8 +12,9 @@ namespace Mio_Rest_Api.Services
         public interface IServiceHEC
         {
             Task<HECStatut> AddStatutAsync(HECStatutDTO statutDTO);
-            
+            Task<List<HECStatut>> GetStatutsByReservationIdAsync(int reservationId); 
         }
+
     }
     public class ServiceHEC : IServiceHEC
     {
@@ -47,7 +48,9 @@ namespace Mio_Rest_Api.Services
             HECStatut newStatut = new HECStatut
             {
                 ReservationId = statutDTO.ReservationId,
+                Actions = statutDTO.Actions,
                 Statut = statutDTO.Statut,
+                Libelle = statutDTO.Libelle,
                 CreatedAt = createdAt,
                 CreatedBy = statutDTO.CreatedBy
             };
@@ -59,5 +62,45 @@ namespace Mio_Rest_Api.Services
             return newStatut;
         }
         #endregion
+
+        #region GetStatutsByReservationIdAsync
+        public async Task<List<HECStatut>> GetStatutsByReservationIdAsync(int reservationId)
+        {
+            try
+            {
+                // Validation de la réservation
+                var reservationExists = await _contexte.Reservations.AnyAsync(r => r.Id == reservationId);
+                if (!reservationExists)
+                {
+                    throw new ArgumentException("La réservation spécifiée n'existe pas.");
+                }
+
+                // Récupérer tous les statuts liés à la réservation et les trier par CreatedAt
+                var statuts = await _contexte.HECStatuts
+                    .Where(s => s.ReservationId == reservationId)
+                    .OrderBy(s => s.CreatedAt) // Tri par CreatedAt (ordre croissant)
+                    .ToListAsync();
+
+                // Vérification si aucun statut n'a été trouvé
+                if (statuts == null || statuts.Count == 0)
+                {
+                    throw new InvalidOperationException("Aucun statut trouvé pour la réservation spécifiée.");
+                }
+
+                return statuts;
+            }
+            catch (ArgumentException ex)
+            {
+                // Gestion des erreurs liées aux arguments invalides (ex: réservation inexistante)
+                throw new ArgumentException($"Erreur lors de la récupération des statuts : {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Gestion des erreurs générales
+                throw new Exception($"Erreur interne lors de la récupération des statuts : {ex.Message}");
+            }
+        }
+        #endregion
+
     }
 }

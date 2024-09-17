@@ -11,6 +11,8 @@
         public string FreeTable21 { get; set; } = "N";
         public string UpdatedBy { get; set; } = string.Empty;
         public string CanceledBy { get; set; } = string.Empty;
+        public string origin { get; set; } = string.Empty;
+        public string DoubleConfirmation {  get; set; } = string.Empty; 
 
 
         public string ClientName { get; set; }=string.Empty;

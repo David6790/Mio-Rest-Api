@@ -19,6 +19,8 @@
         public string Status { get; set; } = "P";
         public string OccupationStatusOnBook { get; set; } = "RAS";
         public string FreeTable21 { get; set; } = string.Empty;
+        public string Origin { get; set; } = string.Empty;
+        public string DoubleConfirmation { get; set; } = string.Empty;
 
         // Propriété de navigation pour le client
         public virtual Client Client { get; set; } = null!;
@@ -79,7 +81,9 @@
     {
         public int Id { get; set; } // Identifiant unique du statut
         public int ReservationId { get; set; } // Lien vers la réservation concernée
-        public string Statut { get; set; } = string.Empty; // Description du statut (ex: "En attente de validation")
+        public string Actions { get; set; } = string.Empty; // Description de l'action (ex: "RAS")
+        public string Statut { get; set; } = string.Empty; // Description du statut (ex: "Réservation enregistrée")
+        public string Libelle { get; set; } = string.Empty; // Description du statut (ex: "En attente de validation")
         public DateTime CreatedAt { get; set; } = DateTime.Now; // Timestamp de la création
         public string CreatedBy { get; set; } = string.Empty; // Créé par (Client, Manager, etc.)
 

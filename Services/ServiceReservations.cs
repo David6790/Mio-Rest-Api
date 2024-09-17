@@ -123,7 +123,9 @@ namespace Mio_Rest_Api.Services
             HECStatutDTO statutDTO = new HECStatutDTO
             {
                 ReservationId = reservation.Id,
-                Statut = "En attente de validation",
+                Libelle = "En attente de validation",
+                Actions = "RAS",
+                Statut = "Réservation enregistrée: ",
                 CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
                 CreatedBy = reservationDTO.CreatedBy
             };
@@ -213,9 +215,27 @@ namespace Mio_Rest_Api.Services
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
             reservation.UpdateTimeStamp = DateTime.Now;
             reservation.Placed = "N";
+            if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
+            {
+                reservation.Status = "M";
+            }
+            
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
+
+            // Ajout du statut "en attente de validation" dans HEC
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Libelle = "En attente de validation",
+                Actions = "RAS",
+                Statut = "Réservation modifiée: ",
+                CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                CreatedBy = reservationDTO.CreatedBy
+            };
+
+            await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
 
             return reservation;
         }
@@ -228,8 +248,35 @@ namespace Mio_Rest_Api.Services
             if (reservation == null) { return null; }
 
             reservation.Status = "C";
+
+            string libelle;
+            string statut;
+
+            if (reservation.UpdatedBy == null)
+            {
+                libelle = "Hâte de vous recevoir";
+                statut = "Réservation Validée: ";
+            }
+            else
+            {
+                libelle = "A très bientot";
+                statut = "Modification Validée: ";
+            }
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
+
+            // Ajout du statut "en attente de validation" dans HEC
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Libelle = libelle,
+                Actions = "RAS",
+                Statut = statut,
+                CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                CreatedBy = "System"
+            };
+
+            await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
 
             return reservation;
         }
@@ -253,6 +300,19 @@ namespace Mio_Rest_Api.Services
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
 
+            // Ajout du statut "en attente de validation" dans HEC
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Libelle = "",
+                Actions = "RAS",
+                Statut = "Réservation Annulée: ",
+                CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                CreatedBy = "System"
+            };
+
+            await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
+
             return reservation;
         }
         #endregion
@@ -274,6 +334,19 @@ namespace Mio_Rest_Api.Services
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
+
+            // Ajout du statut "en attente de validation" dans HEC
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Libelle = "consultez vos mail pour plus de détails",
+                Actions = "RAS",
+                Statut = "Réservation refusée: ",
+                CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                CreatedBy = "System"
+            };
+
+            await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
 
             return reservation;
         }
