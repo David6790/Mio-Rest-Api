@@ -41,8 +41,8 @@ namespace Mio_Rest_Api.Services
                 throw new ArgumentException("La réservation spécifiée n'existe pas.");
             }
 
-            // Conversion du timestamp en DateTime
-            DateTime createdAt = DateTime.ParseExact(statutDTO.CreatedAt, "yyyy-MM-ddTHH:mm:ss", null);
+            
+            DateTime createdAt = DateTime.Now;
 
             // Création du nouvel objet HECStatut
             HECStatut newStatut = new HECStatut

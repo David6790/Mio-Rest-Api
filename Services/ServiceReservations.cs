@@ -17,6 +17,7 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> ValidateReservation(int id);
         Task<ReservationEntity?> AnnulerReservation(int id, string u);
         Task<ReservationEntity?> RefuserReservation(int id, string u);
+        Task<ReservationEntity?> ValidateDoubleConfirmation(int id);
     }
 
     public class ServiceReservations : IServiceReservation
@@ -205,12 +206,18 @@ namespace Mio_Rest_Api.Services
             _allocationService.DeleteAllocations(id);
 
             // Mise à jour des informations de la réservation
+
+            if ((reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
+            {
+                reservationDTO.FreeTable21 = "O";
+            }
+
             reservation.DateResa = reservationDate;
             reservation.TimeResa = reservationTime;
             reservation.NumberOfGuest = reservationDTO.NumberOfGuest;
             reservation.Comment = reservationDTO.Comment;
-            reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
             reservation.FreeTable21 = reservationDTO.FreeTable21;
+            reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
             reservation.CreatedBy = reservationDTO.CreatedBy;
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
             reservation.UpdateTimeStamp = DateTime.Now;
@@ -348,6 +355,42 @@ namespace Mio_Rest_Api.Services
 
             await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
 
+            return reservation;
+        }
+        #endregion
+
+        #region ValidateDoubleConfirmation
+        public async Task<ReservationEntity?> ValidateDoubleConfirmation(int id)
+        {
+            // Rechercher la réservation avec l'ID fourni
+            var reservation = await _contexte.Reservations.FirstOrDefaultAsync(r => r.Id == id);
+
+            if (reservation == null)
+            {
+                return null; // Retourner null si la réservation n'existe pas
+            }
+
+            // Mettre à jour la valeur de DoubleConfirmation
+            reservation.DoubleConfirmation = "O";
+
+            // Mettre à jour l'enregistrement dans la base de données
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+
+            // Créer le statut HEC pour la double confirmation
+            HECStatutDTO statutDTO = new HECStatutDTO
+            {
+                ReservationId = reservation.Id,
+                Actions = "", // Pas d'action spécifique
+                Statut = "Double confirmation reçue", // Statut personnalisé
+                Libelle = "Votre réservation est maintenant ferme et définitive", // Message à afficher
+                CreatedBy = "SYSTEM" // Ajouté par le système
+            };
+
+            // Appel du service pour ajouter le statut HEC
+            await _serviceHEC.AddStatutAsync(statutDTO);
+
+            // Retourner la réservation mise à jour
             return reservation;
         }
         #endregion
