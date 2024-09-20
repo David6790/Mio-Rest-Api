@@ -25,13 +25,15 @@ namespace Mio_Rest_Api.Services
         private readonly ContextApplication _contexte;
         private readonly IAllocationService _allocationService;
         private readonly IServiceHEC _serviceHEC;
+        private readonly IEmailService _emailService;
 
         // Constructeur pour instancier le db_context et le service d'allocation
-        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService, IServiceHEC serviceHEC)
+        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService, IServiceHEC serviceHEC, IEmailService emailService)
         {
             _contexte = contexte;
             _allocationService = allocationService;
             _serviceHEC = serviceHEC;
+            _emailService = emailService;
         }
 
         #region GetAllReservations
@@ -132,6 +134,15 @@ namespace Mio_Rest_Api.Services
             };
 
             await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
+
+            string fullName = $"{reservationDTO.ClientName} {reservationDTO.ClientPrenom}";
+
+            // Construction du DateTime avec la date et l'heure de réservation
+            DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
+
+            // Envoi de l'email de confirmation en attente
+            await _emailService.SendPendingResaAlertAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+
 
             return reservation;
         }
