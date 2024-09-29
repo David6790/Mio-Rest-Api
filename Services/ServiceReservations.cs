@@ -18,6 +18,9 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> AnnulerReservation(int id, string u);
         Task<ReservationEntity?> RefuserReservation(int id, string u);
         Task<ReservationEntity?> ValidateDoubleConfirmation(int id);
+        Task<ReservationEntity?> UpdateReservationNotification(int id, string newNotification);
+        Task<List<ReservationEntity>> GetUntreatedReservation();
+
     }
 
     public class ServiceReservations : IServiceReservation
@@ -42,6 +45,19 @@ namespace Mio_Rest_Api.Services
             return await _contexte.Reservations.Include(r => r.Client).ToListAsync();
         }
         #endregion
+
+        #region GetUntreatedReservation
+        public async Task<List<ReservationEntity>> GetUntreatedReservation()
+        {
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+            return await _contexte.Reservations
+                .Include(r => r.Client)
+                .Where(r => r.Notifications != NotificationLibelles.PasDeNotification && r.DateResa >= today) // Limiter aux réservations futures
+                .ToListAsync();
+        }
+        #endregion
+
 
         #region GetFuturReservations
         public async Task<List<ReservationEntity>> GetFuturReservations()
@@ -116,7 +132,9 @@ namespace Mio_Rest_Api.Services
                 Comment = reservationDTO.Comment,
                 OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
                 CreatedBy = reservationDTO.CreatedBy,
-                FreeTable21 = reservationDTO.FreeTable21
+                FreeTable21 = reservationDTO.FreeTable21,
+                Notifications = NotificationLibelles.NouvelleReservation
+
             };
 
             _contexte.Reservations.Add(reservation);
@@ -236,6 +254,8 @@ namespace Mio_Rest_Api.Services
             if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
             {
                 reservation.Status = "M";
+                reservation.Notifications = NotificationLibelles.ModificationEnAttente;
+                
             }
             
 
@@ -266,6 +286,11 @@ namespace Mio_Rest_Api.Services
             if (reservation == null) { return null; }
 
             reservation.Status = "C";
+            reservation.Notifications = NotificationLibelles.PasDeNotification;
+
+
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
 
             string libelle;
             string statut;
@@ -280,8 +305,6 @@ namespace Mio_Rest_Api.Services
                 libelle = "A très bientot";
                 statut = "Modification Validée: ";
             }
-            _contexte.Reservations.Update(reservation);
-            await _contexte.SaveChangesAsync();
 
             // Ajout du statut "en attente de validation" dans HEC
             HECStatutDTO statutDTO = new HECStatutDTO
@@ -314,6 +337,7 @@ namespace Mio_Rest_Api.Services
             reservation.CanceledBy = user;
             reservation.Placed = "N";
             reservation.CanceledTimeStamp = DateTime.Now;
+            reservation.Notifications = NotificationLibelles.Annulation;
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
@@ -405,6 +429,31 @@ namespace Mio_Rest_Api.Services
             return reservation;
         }
         #endregion
+
+        #region UpdateReservationNotification
+        public async Task<ReservationEntity?> UpdateReservationNotification(int id, string newNotification)
+        {
+            // Rechercher la réservation existante avec l'ID fourni
+            var reservation = await _contexte.Reservations.FirstOrDefaultAsync(r => r.Id == id);
+
+            // Si la réservation n'existe pas, retourner null
+            if (reservation == null)
+            {
+                return null;
+            }
+
+            // Mettre à jour uniquement le champ Notifications
+            reservation.Notifications = newNotification;
+
+            // Mettre à jour l'enregistrement dans la base de données
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+
+            // Retourner la réservation mise à jour
+            return reservation;
+        }
+        #endregion
+
 
         #region Validation Helpers
 

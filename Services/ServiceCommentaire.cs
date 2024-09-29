@@ -11,21 +11,23 @@ namespace Mio_Rest_Api.Services
 {
     public interface IServiceCommentaire
     {
-        Task<Commentaire> AddCommentaireAsync(CommentaireDTO commentaireDTO);
+        Task<Commentaire> AddCommentaireAsync(CommentaireDTO commentaireDTO, string origin);
         Task<List<Commentaire>> GetCommentairesByReservationIdAsync(int reservationId);
     }
 
     public class ServiceCommentaire : IServiceCommentaire
     {
         private readonly ContextApplication _contexte;
+        private readonly IServiceReservation _serviceReservation;
 
-        public ServiceCommentaire(ContextApplication contexte)
+        public ServiceCommentaire(ContextApplication contexte, IServiceReservation serviceReservation)
         {
             _contexte = contexte;
+            _serviceReservation = serviceReservation;
         }
 
         #region AddCommentaireAsync
-        public async Task<Commentaire> AddCommentaireAsync(CommentaireDTO commentaireDTO)
+        public async Task<Commentaire> AddCommentaireAsync(CommentaireDTO commentaireDTO, string? origin)
         {
             // Vérification des champs obligatoires
             if (string.IsNullOrWhiteSpace(commentaireDTO.Message))
@@ -34,7 +36,7 @@ namespace Mio_Rest_Api.Services
             }
 
             // Validation de la réservation liée
-            var reservation = await _contexte.Reservations.FirstOrDefaultAsync(r => r.Id == commentaireDTO.ReservationId);
+            var reservation = await _serviceReservation.GetReservation(commentaireDTO.ReservationId);
             if (reservation == null)
             {
                 throw new ArgumentException("La réservation spécifiée n'existe pas.");
@@ -46,17 +48,23 @@ namespace Mio_Rest_Api.Services
                 ReservationId = commentaireDTO.ReservationId,
                 Message = commentaireDTO.Message,
                 Auteur = commentaireDTO.Auteur,
-                CreatedAt = DateTime.Now // Générez automatiquement l'heure actuelle côté serveur
+                CreatedAt = DateTime.Now // Générer automatiquement l'heure actuelle côté serveur
             };
 
-            // Ajout et sauvegarde dans la base de données
+            // Ajout et sauvegarde du commentaire dans la base de données
             _contexte.Commentaires.Add(newCommentaire);
             await _contexte.SaveChangesAsync();
 
+            // Déterminer la notification à utiliser en fonction de l'origine
+            string notification = string.IsNullOrWhiteSpace(origin) ? NotificationLibelles.NouveauCommentaire : NotificationLibelles.PasDeNotification;
+
+            // Mettre à jour uniquement le champ Notifications de la réservation via la méthode UpdateReservationNotification
+            await _serviceReservation.UpdateReservationNotification(reservation.Id, notification);
+
             return newCommentaire;
         }
-
         #endregion
+
 
         #region GetCommentairesByReservationIdAsync
         public async Task<List<Commentaire>> GetCommentairesByReservationIdAsync(int reservationId)

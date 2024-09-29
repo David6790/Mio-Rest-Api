@@ -29,6 +29,7 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.UpdatedBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.CanceledBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Origin).HasMaxLength(50).IsUnicode(true);
+                entity.Property(e => e.Notifications).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.OccupationStatusOnBook).HasMaxLength(20).IsUnicode(true);
                 entity.Property(e => e.Comment).HasMaxLength(1000).IsUnicode(true);
                 entity.Property(e => e.Placed).HasMaxLength(1).IsUnicode(false);

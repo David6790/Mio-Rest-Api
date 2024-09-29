@@ -21,6 +21,7 @@
         public string FreeTable21 { get; set; } = string.Empty;
         public string Origin { get; set; } = string.Empty;
         public string DoubleConfirmation { get; set; } = string.Empty;
+        public string Notifications { get; set; } = string.Empty;
 
         // Propriété de navigation pour le client
         public virtual Client Client { get; set; } = null!;

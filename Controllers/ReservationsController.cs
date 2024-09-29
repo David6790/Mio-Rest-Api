@@ -240,6 +240,22 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        [HttpGet("untreated")]
+        public async Task<ActionResult<IEnumerable<ReservationEntity>>> GetUntreatedReservations()
+        {
+            try
+            {
+                var reservations = await _serviceReservations.GetUntreatedReservation();
+                return Ok(reservations);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here if you have a logging framework
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
 
 
     }
