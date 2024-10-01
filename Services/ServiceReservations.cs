@@ -3,6 +3,7 @@ using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
 using Mio_Rest_Api.Services.Mio_Rest_Api.Services;
+using System.Globalization;
 
 namespace Mio_Rest_Api.Services
 {
@@ -90,9 +91,39 @@ namespace Mio_Rest_Api.Services
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
         {
-            // Validation des champs obligatoires, comme déjà fait...
-
-            // Validation de la date et de l'heure, comme déjà fait...
+            // Validation des champs obligatoires
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientName))
+            {
+                throw new ArgumentException("Le nom ne peut pas être vide.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientPrenom))
+            {
+                throw new ArgumentException("Le prénom ne peut pas être vide.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone))
+            {
+                throw new ArgumentException("Le numéro de téléphone ne peut pas être vide.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientEmail) || !IsValidEmail(reservationDTO.ClientEmail))
+            {
+                throw new ArgumentException("L'adresse email n'est pas valide.");
+            }
+            if (reservationDTO.NumberOfGuest <= 0)
+            {
+                throw new ArgumentException("Le nombre de personnes doit être un entier positif et non nul.");
+            }
+            if (reservationDTO.NumberOfGuest >= 30)
+            {
+                throw new ArgumentException("Pour les grands groupes, merci de prendre contact avec le restaurant directement.");
+            }
+            if (!validateDate(reservationDTO.DateResa))
+            {
+                throw new ArgumentException("La date doit être aujourd'hui ou dans le futur.");
+            }
+            if (string.IsNullOrWhiteSpace(reservationDTO.TimeResa) || !validateTimeSlot(reservationDTO.DateResa, reservationDTO.TimeResa))
+            {
+                throw new ArgumentException("Le créneau horaire ne peut pas être dans le passé.");
+            }
 
             // Création du client ou mise à jour du nombre de réservations
             Client? client = await _contexte.Clients.FirstOrDefaultAsync(c =>
@@ -134,7 +165,6 @@ namespace Mio_Rest_Api.Services
                 CreatedBy = reservationDTO.CreatedBy,
                 FreeTable21 = reservationDTO.FreeTable21,
                 Notifications = NotificationLibelles.NouvelleReservation
-
             };
 
             _contexte.Reservations.Add(reservation);
@@ -160,7 +190,6 @@ namespace Mio_Rest_Api.Services
 
             // Envoi de l'email de confirmation en attente
             await _emailService.SendPendingResaAlertAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
-
 
             return reservation;
         }
@@ -195,11 +224,15 @@ namespace Mio_Rest_Api.Services
             {
                 throw new ArgumentException("Le nombre de personnes doit être supérieur à zéro.");
             }
+            if (reservationDTO.NumberOfGuest >= 30)
+            {
+                throw new ArgumentException("Pour les grands groupes, merci de prendre contact avec le restaurant directement.");
+            }
 
             // Validation du numéro de téléphone
-            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone) || !IsValidPhoneNumber(reservationDTO.ClientTelephone))
+            if (string.IsNullOrWhiteSpace(reservationDTO.ClientTelephone))
             {
-                throw new ArgumentException("Le numéro de téléphone n'est pas valide.");
+                throw new ArgumentException("Le numéro de téléphone ne peut pas être vide.");
             }
 
             // Validation de l'email
@@ -209,8 +242,19 @@ namespace Mio_Rest_Api.Services
             }
 
             // Validation de la date et de l'heure
-            DateOnly reservationDate = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
-            TimeOnly reservationTime = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            DateOnly reservationDate;
+            TimeOnly reservationTime;
+
+            try
+            {
+                reservationDate = DateOnly.ParseExact(reservationDTO.DateResa, "yyyy-MM-dd");
+                reservationTime = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm");
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException("Le format de la date ou de l'heure est invalide.");
+            }
+
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
 
@@ -228,14 +272,13 @@ namespace Mio_Rest_Api.Services
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
             if (reservation == null)
             {
-                return null; // ou lever une exception si vous préférez
+                return null;
             }
 
             // Supprimer les allocations liées à cette réservation
             _allocationService.DeleteAllocations(id);
 
             // Mise à jour des informations de la réservation
-
             if ((reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
             {
                 reservationDTO.FreeTable21 = "O";
@@ -251,13 +294,12 @@ namespace Mio_Rest_Api.Services
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
             reservation.UpdateTimeStamp = DateTime.Now;
             reservation.Placed = "N";
+
             if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
             {
                 reservation.Status = "M";
                 reservation.Notifications = NotificationLibelles.ModificationEnAttente;
-                
             }
-            
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
@@ -471,12 +513,27 @@ namespace Mio_Rest_Api.Services
             }
         }
 
-        // Méthode pour valider le format du numéro de téléphone
-        private bool IsValidPhoneNumber(string phoneNumber)
+        private bool validateDate(string dateResa)
         {
-            // Implémentez la validation de numéro de téléphone selon vos besoins
-            return true; // Modifiez cette logique selon les besoins de votre projet
+            DateTime date;
+            if (DateTime.TryParseExact(dateResa, "yyyy-MM-dd", null, DateTimeStyles.None, out date))
+            {
+                return date >= DateTime.Today;
+            }
+            return false;
         }
+
+        private bool validateTimeSlot(string dateResa, string timeResa)
+        {
+            DateTime dateTime;
+            if (DateTime.TryParseExact($"{dateResa} {timeResa}", "yyyy-MM-dd HH:mm", null, DateTimeStyles.None, out dateTime))
+            {
+                return dateTime >= DateTime.Now;
+            }
+            return false;
+        }
+
+
 
         #endregion
     }
