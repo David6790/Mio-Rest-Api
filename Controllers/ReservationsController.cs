@@ -255,6 +255,22 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        [HttpGet("byDateAndPeriod")]
+        public async Task<ActionResult<List<ReservationEntity>>> GetReservationsByDateAndPeriod(string date, string period)
+        {
+            try
+            {
+                var reservations = await _serviceReservations.GetReservationsByDateAndPeriod(date, period);
+                return Ok(reservations);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return StatusCode(500, $"Une erreur s'est produite lors de la récupération des réservations par date et période : {ex.Message}");
+            }
+        }
+
+
 
 
 

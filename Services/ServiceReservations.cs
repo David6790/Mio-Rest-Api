@@ -21,6 +21,7 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> ValidateDoubleConfirmation(int id);
         Task<ReservationEntity?> UpdateReservationNotification(int id, string newNotification);
         Task<List<ReservationEntity>> GetUntreatedReservation();
+        Task<List<ReservationEntity>> GetReservationsByDateAndPeriod(string date, string period);
 
     }
 
@@ -87,6 +88,29 @@ namespace Mio_Rest_Api.Services
                 .ToListAsync();
         }
         #endregion
+
+        #region GetReservationsByDateAndPeriod
+        public async Task<List<ReservationEntity>> GetReservationsByDateAndPeriod(string date, string period)
+        {
+            var dateParsed = DateOnly.ParseExact(date, "yyyy-MM-dd");
+            var query = _contexte.Reservations
+                        .Include(r => r.Client)
+                        .Where(r => r.DateResa == dateParsed && r.Status == "C" && r.Placed == "N"); // Ajout de la condition Placed == "N"
+
+            if (period == "midi")
+            {
+                query = query.Where(r => r.CreaTimeStamp.TimeOfDay <= new TimeSpan(14, 0, 0)); // avant 14h
+            }
+            else if (period == "soir")
+            {
+                query = query.Where(r => r.CreaTimeStamp.TimeOfDay >= new TimeSpan(18, 0, 0)); // après 18h
+            }
+
+            return await query.OrderByDescending(r => r.CreaTimeStamp).ToListAsync();
+        }
+
+        #endregion
+
 
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
