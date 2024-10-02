@@ -90,24 +90,29 @@ namespace Mio_Rest_Api.Services
         #endregion
 
         #region GetReservationsByDateAndPeriod
+        #region GetReservationsByDateAndPeriod
         public async Task<List<ReservationEntity>> GetReservationsByDateAndPeriod(string date, string period)
         {
             var dateParsed = DateOnly.ParseExact(date, "yyyy-MM-dd");
             var query = _contexte.Reservations
                         .Include(r => r.Client)
-                        .Where(r => r.DateResa == dateParsed && r.Status == "C" && r.Placed == "N"); // Ajout de la condition Placed == "N"
+                        .Where(r => r.DateResa == dateParsed && r.Status == "C" && r.Placed == "N");
 
             if (period == "midi")
             {
-                query = query.Where(r => r.CreaTimeStamp.TimeOfDay <= new TimeSpan(14, 0, 0)); // avant 14h
+                // Utiliser TimeResa pour filtrer l'heure de réservation
+                query = query.Where(r => r.TimeResa < new TimeOnly(14, 0)); // avant 14h
             }
             else if (period == "soir")
             {
-                query = query.Where(r => r.CreaTimeStamp.TimeOfDay >= new TimeSpan(18, 0, 0)); // après 18h
+                // Utiliser TimeResa pour filtrer l'heure de réservation
+                query = query.Where(r => r.TimeResa >= new TimeOnly(18, 0)); // après 18h
             }
 
             return await query.OrderByDescending(r => r.CreaTimeStamp).ToListAsync();
         }
+        #endregion
+
 
         #endregion
 
