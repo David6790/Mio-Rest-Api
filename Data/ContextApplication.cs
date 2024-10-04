@@ -19,6 +19,7 @@ namespace Mio_Rest_Api.Data
         public virtual DbSet<Allocation> Allocations { get; set; }
         public virtual DbSet<HECStatut> HECStatuts { get; set; } // Ajout pour HECStatut
         public virtual DbSet<Commentaire> Commentaires { get; set; } // Ajout pour Commentaire
+        public virtual DbSet<ToggleEntity> Toggles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -120,6 +121,15 @@ namespace Mio_Rest_Api.Data
                     .WithMany(r => r.Commentaires)
                     .HasForeignKey(e => e.ReservationId);
             });
+
+            modelBuilder.Entity<ToggleEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(100).IsRequired(); // Nom du toggle
+                entity.Property(e => e.NotificationCount).IsRequired(); // Nombre de notifications actives
+                entity.Property(e => e.LastUpdated).IsRequired(); // Date de mise à jour
+            });
+
         }
     }
 }

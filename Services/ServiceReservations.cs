@@ -31,14 +31,16 @@ namespace Mio_Rest_Api.Services
         private readonly IAllocationService _allocationService;
         private readonly IServiceHEC _serviceHEC;
         private readonly IEmailService _emailService;
+        private readonly IServiceToggle _serviceToggle;
 
         // Constructeur pour instancier le db_context et le service d'allocation
-        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService, IServiceHEC serviceHEC, IEmailService emailService)
+        public ServiceReservations(ContextApplication contexte, IAllocationService allocationService, IServiceHEC serviceHEC, IEmailService emailService, IServiceToggle serviceToggle)
         {
             _contexte = contexte;
             _allocationService = allocationService;
             _serviceHEC = serviceHEC;
             _emailService = emailService;
+            _serviceToggle = serviceToggle;
         }
 
         #region GetAllReservations
@@ -220,6 +222,7 @@ namespace Mio_Rest_Api.Services
             // Envoi de l'email de confirmation en attente
             await _emailService.SendPendingResaAlertAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
 
+            await _serviceToggle.IncrementNotificationCountAsync();
             return reservation;
         }
 
@@ -328,6 +331,7 @@ namespace Mio_Rest_Api.Services
             {
                 reservation.Status = "M";
                 reservation.Notifications = NotificationLibelles.ModificationEnAttente;
+                await _serviceToggle.IncrementNotificationCountAsync();
             }
 
             _contexte.Reservations.Update(reservation);
@@ -389,6 +393,7 @@ namespace Mio_Rest_Api.Services
             };
 
             await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
+            await _serviceToggle.DecrementNotificationCountAsync();
 
             return reservation;
         }
@@ -495,6 +500,7 @@ namespace Mio_Rest_Api.Services
 
             // Appel du service pour ajouter le statut HEC
             await _serviceHEC.AddStatutAsync(statutDTO);
+            await _serviceToggle.DecrementNotificationCountAsync();
 
             // Retourner la réservation mise à jour
             return reservation;

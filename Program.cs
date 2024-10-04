@@ -35,7 +35,7 @@ namespace Mio_Rest_Api
             builder.Services.AddScoped<IServiceHEC, ServiceHEC>(); // Enregistrement du service HEC
             builder.Services.AddScoped<IServiceCommentaire, ServiceCommentaire>(); // Enregistrement du service Commentaire
             builder.Services.AddScoped<IEmailService, EmailService>(); // Enregistrement du service Commentaire
-
+            builder.Services.AddScoped<IServiceToggle, ServiceToggle>();
 
 
             // Configure JWT authentication
