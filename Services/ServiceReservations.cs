@@ -92,7 +92,6 @@ namespace Mio_Rest_Api.Services
         #endregion
 
         #region GetReservationsByDateAndPeriod
-        #region GetReservationsByDateAndPeriod
         public async Task<List<ReservationEntity>> GetReservationsByDateAndPeriod(string date, string period)
         {
             var dateParsed = DateOnly.ParseExact(date, "yyyy-MM-dd");
@@ -114,10 +113,6 @@ namespace Mio_Rest_Api.Services
             return await query.OrderByDescending(r => r.CreaTimeStamp).ToListAsync();
         }
         #endregion
-
-
-        #endregion
-
 
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
@@ -179,9 +174,16 @@ namespace Mio_Rest_Api.Services
             }
             await _contexte.SaveChangesAsync();
 
+            // Vérification des conditions pour FreeTable21
             if ((reservationDTO.OccupationStatusSoirOnBook == "FreeTable21" || reservationDTO.OccupationStatusSoirOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
             {
                 reservationDTO.FreeTable21 = "O";
+            }
+
+            // Nouveau contrôle pour FreeTable1330
+            if (reservationDTO.OccupationStatusMidiOnBook == "MidiDoubleService" && TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm") <= TimeOnly.Parse("12:00"))
+            {
+                reservationDTO.FreeTable1330 = "O";
             }
 
             // Création de la réservation
@@ -195,7 +197,10 @@ namespace Mio_Rest_Api.Services
                 OccupationStatusSoirOnBook = reservationDTO.OccupationStatusSoirOnBook,
                 CreatedBy = reservationDTO.CreatedBy,
                 FreeTable21 = reservationDTO.FreeTable21,
-                Notifications = NotificationLibelles.NouvelleReservation
+                FreeTable1330 = reservationDTO.FreeTable1330, // Ajout du champ FreeTable1330
+                Notifications = NotificationLibelles.NouvelleReservation,
+                OccupationStatusMidiOnBook = reservationDTO.OccupationStatusMidiOnBook,
+                
             };
 
             _contexte.Reservations.Add(reservation);
@@ -225,8 +230,10 @@ namespace Mio_Rest_Api.Services
             await _serviceToggle.IncrementNotificationCountAsync();
             return reservation;
         }
-
         #endregion
+
+
+
 
         #region UpdateReservation
         public async Task<ReservationEntity?> UpdateReservation(int id, ReservationDTO reservationDTO)
@@ -315,13 +322,29 @@ namespace Mio_Rest_Api.Services
             {
                 reservationDTO.FreeTable21 = "O";
             }
+            else
+            {
+                reservationDTO.FreeTable21 = "N";
+            }
+
+            // Nouveau contrôle pour FreeTable1330
+            if (reservationDTO.OccupationStatusMidiOnBook == "MidiDoubleService" && reservationTime <= TimeOnly.Parse("12:00"))
+            {
+                reservationDTO.FreeTable1330 = "O";
+            }
+            else
+            {
+                reservationDTO.FreeTable1330 = "N";
+            }
 
             reservation.DateResa = reservationDate;
             reservation.TimeResa = reservationTime;
             reservation.NumberOfGuest = reservationDTO.NumberOfGuest;
             reservation.Comment = reservationDTO.Comment;
             reservation.FreeTable21 = reservationDTO.FreeTable21;
+            reservation.FreeTable1330 = reservationDTO.FreeTable1330; // Ajout du champ FreeTable1330
             reservation.OccupationStatusSoirOnBook = reservationDTO.OccupationStatusSoirOnBook;
+            reservation.OccupationStatusMidiOnBook = reservationDTO.OccupationStatusMidiOnBook; // Ajout du statut midi
             reservation.CreatedBy = reservationDTO.CreatedBy;
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
             reservation.UpdateTimeStamp = DateTime.Now;
@@ -353,6 +376,7 @@ namespace Mio_Rest_Api.Services
             return reservation;
         }
         #endregion
+
 
         #region ValidateReservation
         public async Task<ReservationEntity?> ValidateReservation(int id)

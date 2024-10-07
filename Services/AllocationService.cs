@@ -32,7 +32,7 @@ public class AllocationService : IAllocationService
 
         bool isMultiTable = requestDto.TableId.Count > 1;
 
-        // Récupérer la réservation associée pour obtenir timeResa et FreeTable21
+        // Récupérer la réservation associée pour obtenir timeResa, FreeTable21, et FreeTable1330
         var reservation = _context.Reservations
             .FirstOrDefault(r => r.Id == requestDto.ReservationId);
 
@@ -44,6 +44,7 @@ public class AllocationService : IAllocationService
         // Utilisation du timeResa de la réservation
         TimeOnly timeResa = reservation.TimeResa;
         TimeOnly freeTableThreshold = new TimeOnly(21, 0); // 21h00
+        TimeOnly freeTable1330Threshold = new TimeOnly(13, 30); // 13h30
 
         foreach (var tableId in requestDto.TableId)
         {
@@ -66,6 +67,7 @@ public class AllocationService : IAllocationService
                 {
                     // Vérification si l'allocation existante est après 21h
                     bool isExistingReservationAfter21h = existingReservation.TimeResa >= freeTableThreshold;
+                    bool isExistingReservationAfter1330 = existingReservation.TimeResa >= freeTable1330Threshold;
 
                     // Nouvelle logique pour permettre la réservation avant 21h
                     if (timeResa < freeTableThreshold)
@@ -83,10 +85,27 @@ public class AllocationService : IAllocationService
                             throw new InvalidOperationException("La table n'est pas libre pour une réservation avant 21h.");
                         }
                     }
+                    else if (timeResa < freeTable1330Threshold)
+                    {
+                        // Logique pour le midi avec FreeTable1330
+                        if (isExistingReservationAfter1330)
+                        {
+                            // Vérifier si la réservation actuelle peut libérer la table à 13h30
+                            if (reservation.FreeTable1330 != "O")
+                            {
+                                throw new InvalidOperationException("La table est déjà réservée après 13h30, vous ne pouvez pas ajouter cette réservation.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("La table n'est pas libre pour une réservation avant 13h30.");
+                        }
+                    }
                     else
                     {
-                        // Si la réservation actuelle est après 21h, elle est autorisée à condition que les autres réservations libèrent la table à 21h
-                        if (!isExistingReservationAfter21h && existingReservation.FreeTable21 != "O")
+                        // Si la réservation actuelle est après 13h30 ou 21h, elle est autorisée à condition que les autres réservations libèrent la table à 13h30 ou 21h
+                        if ((!isExistingReservationAfter1330 && existingReservation.FreeTable1330 != "O") ||
+                            (!isExistingReservationAfter21h && existingReservation.FreeTable21 != "O"))
                         {
                             throw new InvalidOperationException("La table est déjà réservée pour une période qui se chevauche avec votre réservation.");
                         }
