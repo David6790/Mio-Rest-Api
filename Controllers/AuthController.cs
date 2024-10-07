@@ -2,6 +2,7 @@
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Services;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Mio_Rest_Api.Controllers
 {
@@ -15,6 +16,7 @@ namespace Mio_Rest_Api.Controllers
         {
             _authService = authService;
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
@@ -48,6 +50,19 @@ namespace Mio_Rest_Api.Controllers
 
             var token = _authService.GenerateJwtToken(user);
             return Ok(new { token });
+        }
+
+        // Nouvelle action pour récupérer la liste des utilisateurs
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = await _authService.GetAllUsers();
+            if (users == null || users.Count == 0)
+            {
+                return NotFound("No users found.");
+            }
+
+            return Ok(users);
         }
     }
 }

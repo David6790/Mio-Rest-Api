@@ -3,90 +3,103 @@ using Microsoft.IdentityModel.Tokens;
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using BCrypt.Net;
 
-namespace Mio_Rest_Api.Services
+public interface IAuthService
 {
-    public interface IAuthService
+    Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto);
+    string GenerateJwtToken(UserEntity user);
+    Task<UserEntity?> Signup(SignupDTO signupDto);
+    Task<List<UserDTO>> GetAllUsers(); // Nouvelle méthode ajoutée
+}
+
+public class AuthService : IAuthService
+{
+    private readonly ContextApplication _context;
+    private readonly IConfiguration _configuration;
+
+    public AuthService(ContextApplication context, IConfiguration configuration)
     {
-        Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto);
-        string GenerateJwtToken(UserEntity user);
-        Task<UserEntity?> Signup(SignupDTO signupDto);
+        _context = context;
+        _configuration = configuration;
     }
 
-    public class AuthService : IAuthService
+    public async Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto)
     {
-        private readonly ContextApplication _context;
-        private readonly IConfiguration _configuration;
-
-        public AuthService(ContextApplication context, IConfiguration configuration)
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == loginDto.Username);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
         {
-            _context = context;
-            _configuration = configuration;
+            return null;
         }
 
-        public async Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto)
-        {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == loginDto.Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
-            {
-                return null;
-            }
+        var token = GenerateJwtToken(user);
+        return (token, user);
+    }
 
-            var token = GenerateJwtToken(user);
-            return (token, user);
+    public async Task<UserEntity?> Signup(SignupDTO signupDto)
+    {
+        if (await _context.Users.AnyAsync(u => u.Username == signupDto.Username || u.Email == signupDto.Email))
+        {
+            return null; // Utilisateur ou email déjà existant
         }
 
-        public async Task<UserEntity?> Signup(SignupDTO signupDto)
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(signupDto.Password);
+
+        var user = new UserEntity
         {
-            if (await _context.Users.AnyAsync(u => u.Username == signupDto.Username || u.Email == signupDto.Email))
-            {
-                return null; // Utilisateur ou email déjà existant
-            }
+            Username = signupDto.Username,
+            Password = hashedPassword,
+            Email = signupDto.Email,
+            Role = signupDto.Role,
+            Nom = signupDto.Nom,
+            Prenom = signupDto.Prenom,
+        };
 
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(signupDto.Password);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
-            var user = new UserEntity
-            {
-                Username = signupDto.Username,
-                Password = hashedPassword,
-                Email = signupDto.Email,
-                Role = signupDto.Role,
-                Nom = signupDto.Nom,
-                Prenom = signupDto.Prenom,
-            };
+        return user;
+    }
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+    public string GenerateJwtToken(UserEntity user)
+    {
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var key = Encoding.ASCII.GetBytes(jwtSettings.GetValue<string>("SecretKey"));
 
-            return user;
-        }
-
-        public string GenerateJwtToken(UserEntity user)
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = Encoding.ASCII.GetBytes(jwtSettings.GetValue<string>("SecretKey"));
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenDescriptor = new SecurityTokenDescriptor
+            Subject = new ClaimsIdentity(new[]
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role)
-                }),
-                Expires = DateTime.UtcNow.AddDays(7), // Token valide pendant 7 jours
-                Issuer = jwtSettings.GetValue<string>("Issuer"),
-                Audience = jwtSettings.GetValue<string>("Audience"),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role)
+            }),
+            Expires = DateTime.UtcNow.AddDays(7), // Token valide pendant 7 jours
+            Issuer = jwtSettings.GetValue<string>("Issuer"),
+            Audience = jwtSettings.GetValue<string>("Audience"),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
-        }
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    // Nouvelle méthode pour récupérer la liste des utilisateurs
+    public async Task<List<UserDTO>> GetAllUsers()
+    {
+        var users = await _context.Users
+            .Select(u => new UserDTO
+            {
+                Nom = u.Nom,
+                Prenom = u.Prenom,
+                Role = u.Role,
+                Email = u.Email
+            })
+            .ToListAsync();
+
+        return users;
     }
 }
