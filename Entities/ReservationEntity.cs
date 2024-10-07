@@ -17,8 +17,10 @@
         public string Placed { get; set; } = "N";
         public string IsPowerUser { get; set; } = "N";
         public string Status { get; set; } = "P";
-        public string OccupationStatusOnBook { get; set; } = "RAS";
+        public string OccupationStatusMidiOnBook { get; set; } = "RAS";
+        public string OccupationStatusSoirOnBook { get; set; } = "RAS";
         public string FreeTable21 { get; set; } = string.Empty;
+        public string FreeTable1330 { get; set; } = string.Empty;
         public string Origin { get; set; } = string.Empty;
         public string DoubleConfirmation { get; set; } = string.Empty;
         public string Notifications { get; set; } = string.Empty;
@@ -50,7 +52,8 @@
     {
         public int Id { get; set; }
         public DateOnly DateOfEffect { get; set; }
-        public string OccStatus { get; set; } = "RAS";
+        public string OccStatusDiner { get; set; } = "RAS";
+        public string OccStatusMidi { get; set; } = "RAS";
     }
 
     public class TableEntity

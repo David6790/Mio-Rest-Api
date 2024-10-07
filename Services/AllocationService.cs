@@ -273,7 +273,7 @@ public class AllocationService : IAllocationService
                 TimeResa = a.Reservation.TimeResa.ToString(),
                 NumberOfGuest = a.Reservation.NumberOfGuest,
                 Comment = a.Reservation.Comment,
-                OccupationStatusOnBook = a.Reservation.OccupationStatusOnBook,
+                OccupationStatusSoirOnBook = a.Reservation.OccupationStatusSoirOnBook,
                 CreatedBy = a.Reservation.CreatedBy,
                 FreeTable21 = a.Reservation.FreeTable21,
                 UpdatedBy = a.Reservation.UpdatedBy,

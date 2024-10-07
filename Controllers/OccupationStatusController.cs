@@ -50,7 +50,7 @@ namespace Mio_Rest_Api.Controllers
                 var (occupations, conflict) = await _serviceOccupationStatus.AddOccupationStatus(occupationDTO);
                 if (conflict)
                 {
-                    return Conflict(new { Message = "Occupation status for the date already exists.", Occupations = occupations });
+                    return Conflict(new { Message = "Un statut d'occupation est déja configuré pour cette date.", Occupations = occupations });
                 }
 
                 return CreatedAtAction(nameof(GetAllOccupationStatus), new { date = occupationDTO.DateOfEffect }, occupations[0]);
@@ -82,7 +82,13 @@ namespace Mio_Rest_Api.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                var errorResponse = new
+                {
+                    message = "Internal server error.",
+                    detail = ex.Message // Détail supplémentaire si nécessaire
+                };
+
+                return StatusCode(500, errorResponse);
             }
         }
 
@@ -106,11 +112,16 @@ namespace Mio_Rest_Api.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateOccupationStatus(int id, [FromBody] string newOccStatus)
+        public async Task<IActionResult> UpdateOccupationStatus(int id, [FromBody] UpdateOccupationStatusDTO newOccStatusDTO)
         {
             try
             {
-                var updatedOccupationStatus = await _serviceOccupationStatus.UpdateOccupationStatus(id, newOccStatus);
+                var updatedOccupationStatus = await _serviceOccupationStatus.UpdateOccupationStatus(
+                    id,
+                    newOccStatusDTO.OccStatusMidi,
+                    newOccStatusDTO.OccStatusDiner
+                );
+
                 if (updatedOccupationStatus == null)
                 {
                     return NotFound("Occupation status not found.");
@@ -123,5 +134,6 @@ namespace Mio_Rest_Api.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
     }
 }

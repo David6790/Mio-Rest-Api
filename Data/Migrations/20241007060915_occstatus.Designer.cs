@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mio_Rest_Api.Data;
 
@@ -11,9 +12,11 @@ using Mio_Rest_Api.Data;
 namespace Mio_Rest_Api.Data.Migrations
 {
     [DbContext(typeof(ContextApplication))]
-    partial class ContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20241007060915_occstatus")]
+    partial class occstatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -282,12 +285,6 @@ namespace Mio_Rest_Api.Data.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(1)");
 
-                    b.Property<string>("FreeTable1330")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("FreeTable21")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -312,13 +309,7 @@ namespace Mio_Rest_Api.Data.Migrations
                     b.Property<int>("NumberOfGuest")
                         .HasColumnType("int");
 
-                    b.Property<string>("OccupationStatusMidiOnBook")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("OccupationStatusSoirOnBook")
+                    b.Property<string>("OccupationStatusOnBook")
                         .IsRequired()
                         .HasMaxLength(20)
                         .IsUnicode(true)

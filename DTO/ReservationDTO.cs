@@ -6,9 +6,11 @@
         public string TimeResa { get; set; } = string.Empty;
         public int NumberOfGuest { get; set; }
         public string? Comment { get; set; }
-        public string OccupationStatusOnBook { get; set; } = string.Empty;
+        public string OccupationStatusMidiOnBook { get; set; } = string.Empty;
+        public string OccupationStatusSoirOnBook { get; set; } = string.Empty;
         public string CreatedBy { get; set; }=string.Empty ;
         public string FreeTable21 { get; set; } = "N";
+        public string FreeTable1330 { get; set; } = "N";
         public string UpdatedBy { get; set; } = string.Empty;
         public string CanceledBy { get; set; } = string.Empty;
         public string origin { get; set; } = string.Empty;

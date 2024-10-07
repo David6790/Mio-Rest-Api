@@ -31,13 +31,15 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.CanceledBy).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Origin).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.Notifications).HasMaxLength(50).IsUnicode(true);
-                entity.Property(e => e.OccupationStatusOnBook).HasMaxLength(20).IsUnicode(true);
+                entity.Property(e => e.OccupationStatusMidiOnBook).HasMaxLength(20).IsUnicode(true);
+                entity.Property(e => e.OccupationStatusSoirOnBook).HasMaxLength(20).IsUnicode(true);
                 entity.Property(e => e.Comment).HasMaxLength(1000).IsUnicode(true);
                 entity.Property(e => e.Placed).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.IsPowerUser).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.Status).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.DoubleConfirmation).HasMaxLength(1).IsUnicode(false);
                 entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
+                entity.Property(e => e.FreeTable1330).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
             });
 
@@ -62,7 +64,8 @@ namespace Mio_Rest_Api.Data
             modelBuilder.Entity<OccupationStatus>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.OccStatus).HasMaxLength(20).IsUnicode(true);
+                entity.Property(e => e.OccStatusDiner).HasMaxLength(20).IsUnicode(true);
+                entity.Property(e => e.OccStatusMidi).HasMaxLength(20).IsUnicode(true);
             });
 
             // Configuration de l'entité User

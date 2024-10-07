@@ -179,7 +179,7 @@ namespace Mio_Rest_Api.Services
             }
             await _contexte.SaveChangesAsync();
 
-            if ((reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
+            if ((reservationDTO.OccupationStatusSoirOnBook == "FreeTable21" || reservationDTO.OccupationStatusSoirOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
             {
                 reservationDTO.FreeTable21 = "O";
             }
@@ -192,7 +192,7 @@ namespace Mio_Rest_Api.Services
                 TimeResa = TimeOnly.ParseExact(reservationDTO.TimeResa, "HH:mm"),
                 NumberOfGuest = reservationDTO.NumberOfGuest,
                 Comment = reservationDTO.Comment,
-                OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook,
+                OccupationStatusSoirOnBook = reservationDTO.OccupationStatusSoirOnBook,
                 CreatedBy = reservationDTO.CreatedBy,
                 FreeTable21 = reservationDTO.FreeTable21,
                 Notifications = NotificationLibelles.NouvelleReservation
@@ -311,7 +311,7 @@ namespace Mio_Rest_Api.Services
             _allocationService.DeleteAllocations(id);
 
             // Mise à jour des informations de la réservation
-            if ((reservationDTO.OccupationStatusOnBook == "FreeTable21" || reservationDTO.OccupationStatusOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
+            if ((reservationDTO.OccupationStatusSoirOnBook == "FreeTable21" || reservationDTO.OccupationStatusSoirOnBook == "Service2Complet") && reservationDTO.TimeResa == "19:00")
             {
                 reservationDTO.FreeTable21 = "O";
             }
@@ -321,7 +321,7 @@ namespace Mio_Rest_Api.Services
             reservation.NumberOfGuest = reservationDTO.NumberOfGuest;
             reservation.Comment = reservationDTO.Comment;
             reservation.FreeTable21 = reservationDTO.FreeTable21;
-            reservation.OccupationStatusOnBook = reservationDTO.OccupationStatusOnBook;
+            reservation.OccupationStatusSoirOnBook = reservationDTO.OccupationStatusSoirOnBook;
             reservation.CreatedBy = reservationDTO.CreatedBy;
             reservation.UpdatedBy = reservationDTO.UpdatedBy;
             reservation.UpdateTimeStamp = DateTime.Now;

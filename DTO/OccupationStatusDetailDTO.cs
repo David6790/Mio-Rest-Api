@@ -3,7 +3,8 @@
     public class OccupationStatusDetailDTO
     {
         public DateOnly DateOfEffect { get; set; }
-        public string OccStatus { get; set; } = string.Empty;
+        public string OccStatusDiner { get; set; } = string.Empty;
+        public string OccStatusMidi { get; set; } = string.Empty;
         public List<string>? TimeSlots { get; set; }
     }
 }

@@ -16,7 +16,7 @@ namespace Mio_Rest_Api.Services
         Task<(List<OccupationStatus>, bool)> AddOccupationStatus(OccupationDTO occupationDTO);
         Task<OccupationStatusDetailDTO> GetOccupationStatusByDate(DateOnly date);
         Task<OccupationStatus> DeleteOccupationStatus(int id);
-        Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatus);
+        Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatusMidi, string newOccStatusDiner);
     }
 
     public class ServiceOccupation : IServiceOccupation
@@ -39,31 +39,47 @@ namespace Mio_Rest_Api.Services
 
         public async Task<(List<OccupationStatus>, bool)> AddOccupationStatus(OccupationDTO occupationDTO)
         {
-            if (!IsValidOccupationStatus(occupationDTO.OccStatus))
+            try
             {
-                throw new ArgumentException("Invalid occupation status value.");
+                // Assigner "RAS" par défaut si le statut du midi est null ou vide (même si c'est une chaîne d'espaces)
+                occupationDTO.OccStatusMidi = string.IsNullOrWhiteSpace(occupationDTO.OccStatusMidi) ? "RAS" : occupationDTO.OccStatusMidi;
+                occupationDTO.OccStatusDiner = string.IsNullOrWhiteSpace(occupationDTO.OccStatusDiner) ? "RAS" : occupationDTO.OccStatusDiner;
+
+                // Validation des statuts pour midi et dîner
+                if (!IsValidOccupationStatus(occupationDTO.OccStatusMidi) || !IsValidOccupationStatus(occupationDTO.OccStatusDiner))
+                {
+                    throw new ArgumentException("Invalid occupation status value.");
+                }
+
+                var dateOfEffect = DateOnly.ParseExact(occupationDTO.DateOfEffect, "yyyy-MM-dd");
+                var existingStatus = await _context.OccupationStatus
+                                                   .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
+
+                if (existingStatus != null)
+                {
+                    return (new List<OccupationStatus> { existingStatus }, true); // Conflit détecté
+                }
+
+                var newOccupationStatus = new OccupationStatus
+                {
+                    DateOfEffect = dateOfEffect,
+                    OccStatusMidi = occupationDTO.OccStatusMidi,
+                    OccStatusDiner = occupationDTO.OccStatusDiner
+                };
+
+                _context.OccupationStatus.Add(newOccupationStatus);
+                await _context.SaveChangesAsync();
+
+                return (new List<OccupationStatus> { newOccupationStatus }, false);
             }
-
-            var dateOfEffect = DateOnly.ParseExact(occupationDTO.DateOfEffect, "yyyy-MM-dd");
-            var existingStatus = await _context.OccupationStatus
-                                               .FirstOrDefaultAsync(os => os.DateOfEffect == dateOfEffect);
-
-            if (existingStatus != null)
+            catch (Exception ex)
             {
-                return (new List<OccupationStatus> { existingStatus }, true); // Conflict detected
+                // Log the error if needed
+                throw new Exception($"Erreur interne : {ex.Message}");
             }
-
-            var newOccupationStatus = new OccupationStatus
-            {
-                DateOfEffect = dateOfEffect,
-                OccStatus = occupationDTO.OccStatus
-            };
-
-            _context.OccupationStatus.Add(newOccupationStatus);
-            await _context.SaveChangesAsync();
-
-            return (new List<OccupationStatus> { newOccupationStatus }, false);
         }
+
+
 
 
         public async Task<OccupationStatusDetailDTO> GetOccupationStatusByDate(DateOnly date)
@@ -71,15 +87,22 @@ namespace Mio_Rest_Api.Services
             var occupationStatus = await _context.OccupationStatus
                                                  .FirstOrDefaultAsync(os => os.DateOfEffect == date);
 
-            var timeSlots = FilterTimeSlots(occupationStatus?.OccStatus ?? "RAS");
+            // Filtrage des créneaux pour midi et dîner
+            var timeSlotsMidi = FilterTimeSlots(occupationStatus?.OccStatusMidi ?? "RAS", true); // True pour midi
+            var timeSlotsDiner = FilterTimeSlots(occupationStatus?.OccStatusDiner ?? "RAS", false); // False pour dîner
+
+            // Fusion des créneaux horaires
+            var timeSlots = timeSlotsMidi.Concat(timeSlotsDiner).ToList();
 
             return new OccupationStatusDetailDTO
             {
                 DateOfEffect = date,
-                OccStatus = occupationStatus?.OccStatus ?? "RAS",
+                OccStatusMidi = occupationStatus?.OccStatusMidi ?? "RAS",
+                OccStatusDiner = occupationStatus?.OccStatusDiner ?? "RAS",
                 TimeSlots = timeSlots
             };
         }
+
 
         public async Task<OccupationStatus> DeleteOccupationStatus(int id)
         {
@@ -94,9 +117,12 @@ namespace Mio_Rest_Api.Services
             return occupationStatus; // Return the deleted occupation status
         }
 
-        public async Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatus)
+        public async Task<OccupationStatus> UpdateOccupationStatus(int id, string newOccStatusMidi, string newOccStatusDiner)
         {
-            if (!IsValidOccupationStatus(newOccStatus))
+            newOccStatusMidi = string.IsNullOrWhiteSpace(newOccStatusMidi) ? "RAS" : newOccStatusMidi;
+            newOccStatusDiner = string.IsNullOrWhiteSpace(newOccStatusDiner) ? "RAS" : newOccStatusDiner;
+            // Validation des statuts
+            if (!IsValidOccupationStatus(newOccStatusMidi) || !IsValidOccupationStatus(newOccStatusDiner))
             {
                 throw new ArgumentException("Invalid occupation status value.");
             }
@@ -104,61 +130,111 @@ namespace Mio_Rest_Api.Services
             var occupationStatus = await _context.OccupationStatus.FindAsync(id);
             if (occupationStatus == null)
             {
-                return null; // OccupationStatus not found
+                return null; // OccupationStatus introuvable
             }
 
-            occupationStatus.OccStatus = newOccStatus;
+            // Mise à jour des statuts pour midi et dîner
+            occupationStatus.OccStatusMidi = newOccStatusMidi;
+            occupationStatus.OccStatusDiner = newOccStatusDiner;
             await _context.SaveChangesAsync();
 
             return occupationStatus;
         }
 
 
-        private List<string> FilterTimeSlots(string occStatus)
+
+        private List<string> FilterTimeSlots(string occStatus, bool isMidi)
         {
-            switch (occStatus)
+            // Filtrage pour les créneaux de midi
+            if (isMidi)
             {
-                case "RAS":
-                    // Retourne tous les TimeSlots disponibles
-                    return TimeSlotConfig.TimeSlots;
+                switch (occStatus)
+                {
+                    case "RAS":
+                        // Retourne les créneaux standard disponibles pour le midi (12:00 à 13:45)
+                        return TimeSlotConfig.TimeSlots.Where(ts => ts.CompareTo("12:00") >= 0 && ts.CompareTo("13:45") <= 0).ToList();
 
-                case "FreeTable21":
-                    // Retourne tous les créneaux de midi (12:00 à 13:45) et les créneaux sélectionnés du soir (19:00 et après 21:00)
-                    return TimeSlotConfig.TimeSlots.Where(ts =>
-                        (ts.StartsWith("12:") || ts.StartsWith("13:") || ts == "19:00" || ts.CompareTo("21:00") > 0)
-                    ).ToList();
+                    case "MidiComplet":
+                        // Aucun créneau disponible pour le midi
+                        return new List<string>();
 
-                case "Service1Complet":
-                    // Retourne les créneaux de 12:00 à 13:45 et de 21:00 à 21:45
-                    return TimeSlotConfig.TimeSlots.Where(ts =>
-                        (ts.StartsWith("12:") || ts.StartsWith("13:") || (ts.CompareTo("21:00") >= 0 && ts.CompareTo("21:45") <= 0))
-                    ).ToList();
+                    case "MidiEtendu":
+                        // Créneaux supplémentaires pour "MidiEtendu" sans modifier TimeSlotConfig
+                        var timeSlotsMidiEtendu = new List<string>
+                        {
+                            "11:15", "11:30", "11:45", "14:00", "14:15", "14:30", "14:45"
+                        };
 
-                case "Service2Complet":
-                    // Retourne les créneaux de 12:00 à 13:45 et 19:00 uniquement
-                    return TimeSlotConfig.TimeSlots.Where(ts =>
-                        (ts.StartsWith("12:") || ts.StartsWith("13:") || ts == "19:00")
-                    ).ToList();
+                        // Combiner les créneaux standards (12:00 - 13:45) avec les créneaux supplémentaires
+                        var allTimeSlotsMidiEtendu = TimeSlotConfig.TimeSlots
+                            .Where(ts => ts.CompareTo("12:00") >= 0 && ts.CompareTo("13:45") <= 0)
+                            .Concat(timeSlotsMidiEtendu)
+                            .OrderBy(ts => ts)  // Assurer un tri par ordre croissant
+                            .ToList();
 
-                case "Complet":
-                    // Retourne uniquement les créneaux de 12:00 à 13:45
-                    return TimeSlotConfig.TimeSlots.Where(ts =>
-                        (ts.StartsWith("12:") || ts.StartsWith("13:"))
-                    ).ToList();
+                        return allTimeSlotsMidiEtendu;
 
-                case "MidiComplet":
-                    // Supprime tout les horaires allant de 12:00 à 13:45
-                    return TimeSlotConfig.TimeSlots.Where(ts =>
-                        !ts.StartsWith("12:") && !ts.StartsWith("13:")
-                    ).ToList();
+                    case "MidiDoubleService":
+                        // Créneaux supplémentaires pour "MidiDoubleService" sans les créneaux entre 12:15 et 13:15
+                        var timeSlotsMidiDoubleService = new List<string>
+                        {
+                            "11:15", "11:30", "11:45", "14:00", "14:15", "14:30", "14:45"
+                        };
 
-                default:
-                    // Aucun créneau disponible
-                    return new List<string>();
+                        // Filtrer les créneaux standards (12:00 à 13:45) mais exclure ceux entre 12:15 et 13:15
+                        var allTimeSlotsMidiDoubleService = TimeSlotConfig.TimeSlots
+                            .Where(ts => (ts.CompareTo("12:00") >= 0 && ts.CompareTo("12:15") < 0) || (ts.CompareTo("13:15") > 0 && ts.CompareTo("13:45") <= 0))
+                            .Concat(timeSlotsMidiDoubleService)
+                            .OrderBy(ts => ts)  // Assurer un tri par ordre croissant
+                            .ToList();
+
+                        return allTimeSlotsMidiDoubleService;
+
+                    default:
+                        // Aucun créneau disponible pour un statut inconnu
+                        return new List<string>();
+                }
+
+            }
+            // Filtrage pour les créneaux du soir
+            else
+            {
+                switch (occStatus)
+                {
+                    case "RAS":
+                        // Retourne tous les créneaux disponibles pour le dîner (19:00 à 21:45)
+                        return TimeSlotConfig.TimeSlots.Where(ts => ts.CompareTo("19:00") >= 0 && ts.CompareTo("21:45") <= 0).ToList();
+
+                    case "Complet":
+                        // Aucun créneau disponible pour le dîner
+                        return new List<string>();
+
+                    case "FreeTable21":
+                        // Retourne les créneaux du soir (19:00 et après 21:00)
+                        return TimeSlotConfig.TimeSlots.Where(ts =>
+                            ts == "19:00" || ts.CompareTo("21:00") > 0
+                        ).ToList();
+
+                    case "Service1Complet":
+                        // Retourne les créneaux de 21:00 à 21:45
+                        return TimeSlotConfig.TimeSlots.Where(ts =>
+                            ts.CompareTo("21:00") >= 0 && ts.CompareTo("21:45") <= 0
+                        ).ToList();
+
+                    case "Service2Complet":
+                        // Retourne uniquement le créneau de 19:00
+                        return TimeSlotConfig.TimeSlots.Where(ts => ts == "19:00").ToList();
+
+                    default:
+                        // Aucun créneau disponible pour un statut inconnu
+                        return new List<string>();
+                }
             }
         }
 
-        private bool IsValidOccupationStatus(string occStatus)
+
+
+        private bool IsValidOccupationStatus(string OccStatusDiner)
         {
             var validStatuses = new HashSet<string>
             {
@@ -167,10 +243,12 @@ namespace Mio_Rest_Api.Services
                 "Service1Complet",
                 "Service2Complet",
                 "Complet",
-                "MidiComplet"
+                "MidiComplet",
+                "MidiEtendu", 
+                "MidiDoubleService"
             };
 
-            return validStatuses.Contains(occStatus);
+            return validStatuses.Contains(OccStatusDiner);
         }
 
     }
