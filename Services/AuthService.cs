@@ -13,7 +13,9 @@ public interface IAuthService
     Task<(string Token, UserEntity User)?> Authenticate(LoginDTO loginDto);
     string GenerateJwtToken(UserEntity user);
     Task<UserEntity?> Signup(SignupDTO signupDto);
-    Task<List<UserDTO>> GetAllUsers(); // Nouvelle méthode ajoutée
+    Task<List<UserDTO>> GetAllUsers();
+    Task<bool> UpdateUserRole(string email, string newRole); // Méthode pour modifier le rôle
+    Task<bool> DeleteUser(string email); // Méthode pour supprimer l'utilisateur
 }
 
 public class AuthService : IAuthService
@@ -38,31 +40,35 @@ public class AuthService : IAuthService
         var token = GenerateJwtToken(user);
         return (token, user);
     }
-
     public async Task<UserEntity?> Signup(SignupDTO signupDto)
     {
+        // Vérifier si l'utilisateur ou l'email existe déjà
         if (await _context.Users.AnyAsync(u => u.Username == signupDto.Username || u.Email == signupDto.Email))
         {
             return null; // Utilisateur ou email déjà existant
         }
 
+        // Hacher le mot de passe
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(signupDto.Password);
 
+        // Créer un nouvel utilisateur avec le rôle en majuscule
         var user = new UserEntity
         {
             Username = signupDto.Username,
             Password = hashedPassword,
             Email = signupDto.Email,
-            Role = signupDto.Role,
+            Role = signupDto.Role.ToUpperInvariant(), // Convertir le rôle en majuscules
             Nom = signupDto.Nom,
             Prenom = signupDto.Prenom,
         };
 
+        // Ajouter l'utilisateur à la base de données
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
         return user;
     }
+
 
     public string GenerateJwtToken(UserEntity user)
     {
@@ -87,7 +93,6 @@ public class AuthService : IAuthService
         return tokenHandler.WriteToken(token);
     }
 
-    // Nouvelle méthode pour récupérer la liste des utilisateurs
     public async Task<List<UserDTO>> GetAllUsers()
     {
         var users = await _context.Users
@@ -102,4 +107,45 @@ public class AuthService : IAuthService
 
         return users;
     }
+
+
+
+    // Méthode pour mettre à jour le rôle d'un utilisateur
+    public async Task<bool> UpdateUserRole(string email, string newRole)
+    {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            return false; // Utilisateur non trouvé
+        }
+
+        // Convertir le rôle en majuscule avant de le sauvegarder en base
+        user.Role = newRole.ToUpperInvariant();
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // Méthode pour supprimer un utilisateur par email
+    public async Task<bool> DeleteUser(string email)
+    {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            return false; // Utilisateur non trouvé
+        }
+
+        // Empêcher la suppression si l'utilisateur est le créateur de l'application
+        if (user.Email == "david.lb90@gmail.com" && user.Role == "ADMIN")
+        {
+            throw new InvalidOperationException("Impossible de supprimer le créateur de l'application.");
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
+
+
+
+

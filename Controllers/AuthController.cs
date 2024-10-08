@@ -52,7 +52,7 @@ namespace Mio_Rest_Api.Controllers
             return Ok(new { token });
         }
 
-        // Nouvelle action pour récupérer la liste des utilisateurs
+        // Action pour récupérer la liste des utilisateurs
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
@@ -64,5 +64,38 @@ namespace Mio_Rest_Api.Controllers
 
             return Ok(users);
         }
+
+        // Nouvelle action pour modifier le rôle d'un utilisateur
+        [HttpPut("users/role")]
+        public async Task<IActionResult> UpdateUserRole([FromBody] UpdateRoleDTO updateRoleDto)
+        {
+            var success = await _authService.UpdateUserRole(updateRoleDto.Email, updateRoleDto.NewRole);
+            if (!success)
+            {
+                return NotFound("User not found.");
+            }
+
+            return Ok("User role updated successfully.");
+        }
+
+        // Nouvelle action pour supprimer un utilisateur par email
+        [HttpDelete("users/{email}")]
+        public async Task<IActionResult> DeleteUser(string email)
+        {
+            try
+            {
+                var success = await _authService.DeleteUser(email);
+                if (!success)
+                {
+                    return NotFound("User not found.");
+                }
+                return Ok("User deleted successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // Renvoyer un message d'erreur spécifique pour le créateur de l'application
+            }
+        }
+
     }
 }
