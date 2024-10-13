@@ -24,6 +24,7 @@
         public string Origin { get; set; } = string.Empty;
         public string DoubleConfirmation { get; set; } = string.Empty;
         public string Notifications { get; set; } = string.Empty;
+        public bool CommentairClient { get; set; } = false;
 
         // Propriété de navigation pour le client
         public virtual Client Client { get; set; } = null!;

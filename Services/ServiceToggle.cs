@@ -9,6 +9,10 @@ namespace Mio_Rest_Api.Services.Mio_Rest_Api.Services
         Task<int> GetNotificationCountAsync(); // Récupérer le nombre de notifications
         Task IncrementNotificationCountAsync(); // Incrémenter le compteur
         Task DecrementNotificationCountAsync(); // Décrémenter le compteur
+
+        Task<int> GetCommentNotificationCountAsync(); // Récupérer le nombre de notifications pour les commentaires
+        Task IncrementCommentNotificationCountAsync(); // Incrémenter le compteur pour les commentaires
+        Task DecrementCommentNotificationCountAsync(); // Décrémenter le compteur pour les commentaires
     }
 
     public class ServiceToggle : IServiceToggle
@@ -23,97 +27,105 @@ namespace Mio_Rest_Api.Services.Mio_Rest_Api.Services
         #region GetNotificationCountAsync
         public async Task<int> GetNotificationCountAsync()
         {
-            try
-            {
-                // Recherche de la ligne avec le nom "Notification"
-                var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Notification");
+            // Récupérer les deux lignes en une seule requête SQL
+            var toggles = await _context.Toggles
+                .Where(t => t.Name == "Notification" || t.Name == "Commentaire")
+                .ToListAsync();
 
-                // Vérifie si l'entrée "Notification" existe
-                if (toggle == null)
-                {
-                    throw new ArgumentException("Le toggle 'Notification' n'existe pas.");
-                }
+            // Récupérer les valeurs de NotificationCount et s'assurer que les lignes existent
+            var notificationCount = toggles.FirstOrDefault(t => t.Name == "Notification")?.NotificationCount ?? 0;
+            var commentaireCount = toggles.FirstOrDefault(t => t.Name == "Commentaire")?.NotificationCount ?? 0;
 
-                // Retourne le nombre de notifications
-                return toggle.NotificationCount;
-            }
-            catch (ArgumentException ex)
-            {
-                throw new ArgumentException($"Erreur lors de la récupération du toggle Notification : {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Erreur interne lors de la récupération du toggle Notification : {ex.Message}");
-            }
+            // Retourner la somme des deux valeurs
+            return notificationCount + commentaireCount;
         }
+
         #endregion
 
         #region IncrementNotificationCountAsync
         public async Task IncrementNotificationCountAsync()
         {
-            try
+            var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Notification");
+            if (toggle == null)
             {
-                // Recherche de la ligne avec le nom "Notification"
-                var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Notification");
-
-                // Vérifie si l'entrée "Notification" existe
-                if (toggle == null)
-                {
-                    throw new ArgumentException("Le toggle 'Notification' n'existe pas.");
-                }
-
-                // Incrémente le nombre de notifications
-                toggle.NotificationCount += 1;
-                toggle.LastUpdated = DateTime.Now;
-
-                // Sauvegarde dans la base de données
-                _context.Toggles.Update(toggle);
-                await _context.SaveChangesAsync();
+                throw new ArgumentException("Le toggle 'Notification' n'existe pas.");
             }
-            catch (ArgumentException ex)
-            {
-                throw new ArgumentException($"Erreur lors de l'incrémentation du toggle Notification : {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Erreur interne lors de l'incrémentation du toggle Notification : {ex.Message}");
-            }
+
+            toggle.NotificationCount += 1;
+            toggle.LastUpdated = DateTime.Now;
+
+            _context.Toggles.Update(toggle);
+            await _context.SaveChangesAsync();
         }
         #endregion
 
         #region DecrementNotificationCountAsync
         public async Task DecrementNotificationCountAsync()
         {
-            try
+            var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Notification");
+            if (toggle == null)
             {
-                // Recherche de la ligne avec le nom "Notification"
-                var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Notification");
-
-                // Vérifie si l'entrée "Notification" existe
-                if (toggle == null)
-                {
-                    throw new ArgumentException("Le toggle 'Notification' n'existe pas.");
-                }
-
-                // Décrémente le nombre de notifications, en s'assurant qu'il ne passe pas en dessous de zéro
-                if (toggle.NotificationCount > 0)
-                {
-                    toggle.NotificationCount -= 1;
-                }
-                toggle.LastUpdated = DateTime.Now;
-
-                // Sauvegarde dans la base de données
-                _context.Toggles.Update(toggle);
-                await _context.SaveChangesAsync();
+                throw new ArgumentException("Le toggle 'Notification' n'existe pas.");
             }
-            catch (ArgumentException ex)
+
+            if (toggle.NotificationCount > 0)
             {
-                throw new ArgumentException($"Erreur lors de la décrémentation du toggle Notification : {ex.Message}");
+                toggle.NotificationCount -= 1;
             }
-            catch (Exception ex)
+            toggle.LastUpdated = DateTime.Now;
+
+            _context.Toggles.Update(toggle);
+            await _context.SaveChangesAsync();
+        }
+        #endregion
+
+        #region GetCommentNotificationCountAsync
+        public async Task<int> GetCommentNotificationCountAsync()
+        {
+            var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Commentaire");
+            if (toggle == null)
             {
-                throw new Exception($"Erreur interne lors de la décrémentation du toggle Notification : {ex.Message}");
+                throw new ArgumentException("Le toggle 'Commentaire' n'existe pas.");
             }
+
+            return toggle.NotificationCount; // On suppose que ce champ gère les notifications des commentaires
+        }
+        #endregion
+
+        #region IncrementCommentNotificationCountAsync
+        public async Task IncrementCommentNotificationCountAsync()
+        {
+            var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Commentaire");
+            if (toggle == null)
+            {
+                throw new ArgumentException("Le toggle 'Commentaire' n'existe pas.");
+            }
+
+            toggle.NotificationCount += 1;
+            toggle.LastUpdated = DateTime.Now;
+
+            _context.Toggles.Update(toggle);
+            await _context.SaveChangesAsync();
+        }
+        #endregion
+
+        #region DecrementCommentNotificationCountAsync
+        public async Task DecrementCommentNotificationCountAsync()
+        {
+            var toggle = await _context.Toggles.FirstOrDefaultAsync(t => t.Name == "Commentaire");
+            if (toggle == null)
+            {
+                throw new ArgumentException("Le toggle 'Commentaire' n'existe pas.");
+            }
+
+            if (toggle.NotificationCount > 0)
+            {
+                toggle.NotificationCount -= 1;
+            }
+            toggle.LastUpdated = DateTime.Now;
+
+            _context.Toggles.Update(toggle);
+            await _context.SaveChangesAsync();
         }
         #endregion
     }

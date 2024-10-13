@@ -16,6 +16,7 @@
         public string origin { get; set; } = string.Empty;
         public string DoubleConfirmation {  get; set; } = string.Empty; 
         public string Notifications {  get; set; } = string.Empty; 
+        public string Status {  get; set; } = string.Empty;
 
 
         public string ClientName { get; set; }=string.Empty;

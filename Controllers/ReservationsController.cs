@@ -270,6 +270,22 @@ namespace Mio_Rest_Api.Controllers
             }
         }
 
+        [HttpGet("client-comments")]
+        public async Task<ActionResult<IEnumerable<ReservationEntity>>> GetReservationsWithClientComments()
+        {
+            try
+            {
+                // Appel de la méthode du service pour obtenir les réservations avec commentaire client
+                var reservations = await _serviceReservations.GetReservationsWithClientComments();
+                return Ok(reservations);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (si un système de logging est en place)
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
 
 

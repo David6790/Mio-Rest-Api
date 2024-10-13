@@ -22,6 +22,8 @@ namespace Mio_Rest_Api.Services
         Task<ReservationEntity?> UpdateReservationNotification(int id, string newNotification);
         Task<List<ReservationEntity>> GetUntreatedReservation();
         Task<List<ReservationEntity>> GetReservationsByDateAndPeriod(string date, string period);
+        Task<List<ReservationEntity>> GetReservationsWithClientComments();
+
 
     }
 
@@ -114,6 +116,18 @@ namespace Mio_Rest_Api.Services
         }
         #endregion
 
+        #region GetReservationsWithClientComments
+        public async Task<List<ReservationEntity>> GetReservationsWithClientComments()
+        {
+            return await _contexte.Reservations
+                .Include(r => r.Client) // Inclure les détails du client
+                .Where(r => r.CommentairClient == true) // Filtrer par CommentairClient à true
+                .OrderByDescending(r => r.CreaTimeStamp) // Optionnel : trier par timestamp de création
+                .ToListAsync();
+        }
+        #endregion
+
+
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
         {
@@ -186,6 +200,17 @@ namespace Mio_Rest_Api.Services
                 reservationDTO.FreeTable1330 = "O";
             }
 
+            if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
+            {
+                reservationDTO.Status = "C";
+                reservationDTO.Notifications = NotificationLibelles.PasDeNotification;
+            }
+            else 
+            { 
+                reservationDTO.Status = "P";
+                reservationDTO.Notifications = NotificationLibelles.NouvelleReservation;
+            }
+
             // Création de la réservation
             ReservationEntity reservation = new ReservationEntity
             {
@@ -198,15 +223,16 @@ namespace Mio_Rest_Api.Services
                 CreatedBy = reservationDTO.CreatedBy,
                 FreeTable21 = reservationDTO.FreeTable21,
                 FreeTable1330 = reservationDTO.FreeTable1330, // Ajout du champ FreeTable1330
-                Notifications = NotificationLibelles.NouvelleReservation,
+                Notifications = reservationDTO.Notifications,
                 OccupationStatusMidiOnBook = reservationDTO.OccupationStatusMidiOnBook,
-                
+                Status = reservationDTO.Status,
+
+
             };
 
             _contexte.Reservations.Add(reservation);
             await _contexte.SaveChangesAsync(); // Sauvegarde de la réservation dans la base de données
 
-            // Ajout du statut "en attente de validation" dans HEC
             HECStatutDTO statutDTO = new HECStatutDTO
             {
                 ReservationId = reservation.Id,
@@ -216,18 +242,45 @@ namespace Mio_Rest_Api.Services
                 CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
                 CreatedBy = reservationDTO.CreatedBy
             };
-
             await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
+
+            // Ajout du statut "validé" dans la foulée dans HEC si resa origin OPC
+            if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
+            {
+                HECStatutDTO statutDTO2 = new HECStatutDTO
+                {
+                    ReservationId = reservation.Id,
+                    Libelle = "Hâte de vous recevoir",
+                    Actions = "RAS",
+                    Statut = "Réservation Validée: ",
+                    CreatedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), // Format de la date pour correspondre au DTO
+                    CreatedBy = reservationDTO.CreatedBy
+                };
+                await _serviceHEC.AddStatutAsync(statutDTO2); // Ajout du statut
+
+            }
+       
+
+            
 
             string fullName = $"{reservationDTO.ClientName} {reservationDTO.ClientPrenom}";
 
             // Construction du DateTime avec la date et l'heure de réservation
             DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
 
-            // Envoi de l'email de confirmation en attente
-            await _emailService.SendPendingResaAlertAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+            // Envoi de l'email de confirmation en attente au client
+            //await _emailService.SendPendingResaClientAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
 
-            await _serviceToggle.IncrementNotificationCountAsync();
+            // Envoi de l'email de notification au gestionnaire pour lui dire qu'une nouvelle réservation est en attente de traitement
+            //await _emailService.SendNotificationGestionnaireReservationAsync(fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+
+            // Mise à jour des notifications dans la base de données
+            if (string.IsNullOrWhiteSpace(reservationDTO.origin)) 
+            { 
+                await _serviceToggle.IncrementNotificationCountAsync(); 
+            }
+                
+
             return reservation;
         }
         #endregion
@@ -355,6 +408,18 @@ namespace Mio_Rest_Api.Services
                 reservation.Status = "M";
                 reservation.Notifications = NotificationLibelles.ModificationEnAttente;
                 await _serviceToggle.IncrementNotificationCountAsync();
+
+                // **Ajout du service mail ici** pour prévenir le gestionnaire que le client a modifié sa réservation
+                string fullName = $"{reservation.Client.Name} {reservation.Client.Prenom}";
+                DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
+
+
+                //await _emailService.SendNotificationGestionnaireModificationAsync(
+                //    fullName,                    // Nom complet du client
+                //    reservationDTO.NumberOfGuest, // Nombre d'invités
+                //    reservationDateTime,          // Date et heure de la réservation
+                //    reservation.Id                // ID de la réservation pour référence
+                //);
             }
 
             _contexte.Reservations.Update(reservation);
@@ -378,15 +443,15 @@ namespace Mio_Rest_Api.Services
         #endregion
 
 
+
         #region ValidateReservation
         public async Task<ReservationEntity?> ValidateReservation(int id)
         {
             var reservation = await _contexte.Reservations.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == id);
             if (reservation == null) { return null; }
 
-            reservation.Status = "C";
+            reservation.Status = "C"; // Réservation validée
             reservation.Notifications = NotificationLibelles.PasDeNotification;
-
 
             _contexte.Reservations.Update(reservation);
             await _contexte.SaveChangesAsync();
@@ -401,7 +466,7 @@ namespace Mio_Rest_Api.Services
             }
             else
             {
-                libelle = "A très bientot";
+                libelle = "A très bientôt";
                 statut = "Modification Validée: ";
             }
 
@@ -417,11 +482,28 @@ namespace Mio_Rest_Api.Services
             };
 
             await _serviceHEC.AddStatutAsync(statutDTO); // Ajout du statut
+
+            // Envoi de l'email de validation de la réservation au client
+            string fullName = $"{reservation.Client.Name} {reservation.Client.Prenom}";
+            DateTime reservationDateTime = DateTime.ParseExact($"{reservation.DateResa} {reservation.TimeResa}", "dd/MM/yyyy HH:mm", null);
+
+
+            // Appel du service d'email pour envoyer l'email de confirmation au client
+            //await _emailService.SendClientReservationConfirmeAsync(
+            //    reservation.Client.Email,         // Email du client
+            //    fullName,                         // Nom complet du client
+            //    reservation.NumberOfGuest,        // Nombre de personnes
+            //    reservationDateTime,              // Date et heure de la réservation
+            //    reservation.Id                    // ID de la réservation pour le lien
+            //);
+
+            // Mise à jour des notifications après la confirmation
             await _serviceToggle.DecrementNotificationCountAsync();
 
             return reservation;
         }
         #endregion
+
 
         #region AnnulerReservation
         public async Task<ReservationEntity?> AnnulerReservation(int id, string user)

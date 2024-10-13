@@ -41,6 +41,8 @@ namespace Mio_Rest_Api.Data
                 entity.Property(e => e.FreeTable21).HasMaxLength(50).IsUnicode(true);
                 entity.Property(e => e.FreeTable1330).HasMaxLength(50).IsUnicode(true);
                 entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.IdClient);
+                entity.Property(e => e.CommentairClient).HasDefaultValue(false);
+
             });
 
             modelBuilder.Entity<MenuEntity>(entity =>

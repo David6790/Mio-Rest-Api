@@ -2,6 +2,7 @@
 using Mio_Rest_Api.Data;
 using Mio_Rest_Api.DTO;
 using Mio_Rest_Api.Entities;
+using Mio_Rest_Api.Services.Mio_Rest_Api.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,17 +14,25 @@ namespace Mio_Rest_Api.Services
     {
         Task<Commentaire> AddCommentaireAsync(CommentaireDTO commentaireDTO, string origin);
         Task<List<Commentaire>> GetCommentairesByReservationIdAsync(int reservationId);
+
+        // Nouvelle méthode pour mettre à jour le statut du champ CommentaireClient
+        Task UpdateCommentaireClientStatus(int reservationId, bool hasCommentaireClient);
     }
+
 
     public class ServiceCommentaire : IServiceCommentaire
     {
         private readonly ContextApplication _contexte;
         private readonly IServiceReservation _serviceReservation;
+        private readonly IServiceToggle _serviceToggle;
+        private readonly IEmailService _emailService;
 
-        public ServiceCommentaire(ContextApplication contexte, IServiceReservation serviceReservation)
+        public ServiceCommentaire(ContextApplication contexte, IServiceReservation serviceReservation, IServiceToggle serviceToggle, IEmailService emailService)
         {
             _contexte = contexte;
             _serviceReservation = serviceReservation;
+            _serviceToggle = serviceToggle;
+            _emailService = emailService;
         }
 
         #region AddCommentaireAsync
@@ -55,15 +64,63 @@ namespace Mio_Rest_Api.Services
             _contexte.Commentaires.Add(newCommentaire);
             await _contexte.SaveChangesAsync();
 
-            // Déterminer la notification à utiliser en fonction de l'origine
-            string notification = string.IsNullOrWhiteSpace(origin) ? NotificationLibelles.NouveauCommentaire : NotificationLibelles.PasDeNotification;
+            string clientName = reservation.Client.Name + " " + reservation.Client.Prenom;
+            DateTime reservationDateTime = DateTime.ParseExact($"{reservation.DateResa} {reservation.TimeResa}", "dd/MM/yyyy HH:mm", null);
 
-            // Mettre à jour uniquement le champ Notifications de la réservation via la méthode UpdateReservationNotification
-            await _serviceReservation.UpdateReservationNotification(reservation.Id, notification);
+            // Bloc if pour gérer les logiques basées sur le champ origin
+            if (string.IsNullOrWhiteSpace(origin))
+            {
+                
+                // Logique si origin est null ou vide
+                await UpdateCommentaireClientStatus(reservation.Id, true);
+                await _serviceToggle.IncrementCommentNotificationCountAsync();
+                //await _emailService.SendNotificationGestionnaireCommentaireAsync(clientName, newCommentaire.Message, newCommentaire.CreatedAt, reservation.Id);
+            }
+            else
+            {
+                // Logique si origin a une valeur (non null ou non vide)
+                await UpdateCommentaireClientStatus(reservation.Id, false);
+                await _serviceToggle.DecrementCommentNotificationCountAsync();
+                //await _emailService.SendClientMessageRecuAsync(reservation.Client.Email, clientName, reservation.NumberOfGuest, reservationDateTime, reservation.Id);
+
+                // Tu peux ajouter d'autres logiques en fonction des différentes valeurs possibles d'origin ici.
+                // Par exemple :
+                if (origin == "someValue")
+                {
+                    // Logique spécifique pour "someValue"
+                }
+                else if (origin == "anotherValue")
+                {
+                    // Logique spécifique pour "anotherValue"
+                }
+                // Ajoute autant de conditions que nécessaire
+            }
 
             return newCommentaire;
         }
+
         #endregion
+        #region UpdateCommentaireClientStatus
+        public async Task UpdateCommentaireClientStatus(int reservationId, bool hasCommentaireClient)
+        {
+            // Récupérer la réservation par son ID
+            var reservation = await _contexte.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId);
+
+            // Vérifier si la réservation existe
+            if (reservation == null)
+            {
+                throw new ArgumentException("La réservation spécifiée n'existe pas.");
+            }
+
+            // Mettre à jour la propriété CommentairClient
+            reservation.CommentairClient = hasCommentaireClient;
+
+            // Sauvegarder les modifications dans la base de données
+            _contexte.Reservations.Update(reservation);
+            await _contexte.SaveChangesAsync();
+        }
+        #endregion
+
 
 
         #region GetCommentairesByReservationIdAsync
