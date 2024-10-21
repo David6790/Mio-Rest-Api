@@ -74,14 +74,14 @@ namespace Mio_Rest_Api.Services
                 // Logique si origin est null ou vide
                 await UpdateCommentaireClientStatus(reservation.Id, true);
                 await _serviceToggle.IncrementCommentNotificationCountAsync();
-                //await _emailService.SendNotificationGestionnaireCommentaireAsync(clientName, newCommentaire.Message, newCommentaire.CreatedAt, reservation.Id);
+                await _emailService.SendNotificationGestionnaireCommentaireAsync(clientName, newCommentaire.Message, newCommentaire.CreatedAt, reservation.Id);
             }
             else
             {
                 // Logique si origin a une valeur (non null ou non vide)
                 await UpdateCommentaireClientStatus(reservation.Id, false);
                 await _serviceToggle.DecrementCommentNotificationCountAsync();
-                //await _emailService.SendClientMessageRecuAsync(reservation.Client.Email, clientName, reservation.NumberOfGuest, reservationDateTime, reservation.Id);
+                await _emailService.SendClientMessageRecuAsync(reservation.Client.Email, clientName, reservation.NumberOfGuest, reservationDateTime, reservation.Id);
 
                 // Tu peux ajouter d'autres logiques en fonction des différentes valeurs possibles d'origin ici.
                 // Par exemple :

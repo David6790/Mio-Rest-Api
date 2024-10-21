@@ -269,10 +269,10 @@ namespace Mio_Rest_Api.Services
             DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
 
             // Envoi de l'email de confirmation en attente au client
-            //await _emailService.SendPendingResaClientAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+            await _emailService.SendPendingResaClientAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
 
             // Envoi de l'email de notification au gestionnaire pour lui dire qu'une nouvelle réservation est en attente de traitement
-            //await _emailService.SendNotificationGestionnaireReservationAsync(fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+            await _emailService.SendNotificationGestionnaireReservationAsync(fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
 
             // Mise à jour des notifications dans la base de données
             if (string.IsNullOrWhiteSpace(reservationDTO.origin)) 
@@ -414,12 +414,12 @@ namespace Mio_Rest_Api.Services
                 DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
 
 
-                //await _emailService.SendNotificationGestionnaireModificationAsync(
-                //    fullName,                    // Nom complet du client
-                //    reservationDTO.NumberOfGuest, // Nombre d'invités
-                //    reservationDateTime,          // Date et heure de la réservation
-                //    reservation.Id                // ID de la réservation pour référence
-                //);
+                await _emailService.SendNotificationGestionnaireModificationAsync(
+                   fullName,                    // Nom complet du client
+                    reservationDTO.NumberOfGuest, // Nombre d'invités
+                   reservationDateTime,          // Date et heure de la réservation
+                   reservation.Id                // ID de la réservation pour référence
+                );
             }
 
             _contexte.Reservations.Update(reservation);
@@ -489,13 +489,13 @@ namespace Mio_Rest_Api.Services
 
 
             // Appel du service d'email pour envoyer l'email de confirmation au client
-            //await _emailService.SendClientReservationConfirmeAsync(
-            //    reservation.Client.Email,         // Email du client
-            //    fullName,                         // Nom complet du client
-            //    reservation.NumberOfGuest,        // Nombre de personnes
-            //    reservationDateTime,              // Date et heure de la réservation
-            //    reservation.Id                    // ID de la réservation pour le lien
-            //);
+            await _emailService.SendClientReservationConfirmeAsync(
+                reservation.Client.Email,         // Email du client
+                fullName,                         // Nom complet du client
+                reservation.NumberOfGuest,        // Nombre de personnes
+                reservationDateTime,              // Date et heure de la réservation
+                reservation.Id                    // ID de la réservation pour le lien
+            );
 
             // Mise à jour des notifications après la confirmation
             await _serviceToggle.DecrementNotificationCountAsync();

@@ -89,12 +89,13 @@ namespace Mio_Rest_Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AllowAllOrigins");
 
             app.UseAuthentication(); // cette ligne pour utiliser l'authentification
             app.UseAuthorization();
 
             app.MapControllers();
-            app.UseCors("AllowAllOrigins");
+            
 
             app.Run();
         }
