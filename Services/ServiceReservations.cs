@@ -130,7 +130,7 @@ namespace Mio_Rest_Api.Services
 
         #region CreateReservation
         public async Task<ReservationEntity> CreateReservation(ReservationDTO reservationDTO)
-        {
+         {
             // Validation des champs obligatoires
             if (string.IsNullOrWhiteSpace(reservationDTO.ClientName))
             {
@@ -205,8 +205,8 @@ namespace Mio_Rest_Api.Services
                 reservationDTO.Status = "C";
                 reservationDTO.Notifications = NotificationLibelles.PasDeNotification;
             }
-            else 
-            { 
+            else
+            {
                 reservationDTO.Status = "P";
                 reservationDTO.Notifications = NotificationLibelles.NouvelleReservation;
             }
@@ -259,27 +259,68 @@ namespace Mio_Rest_Api.Services
                 await _serviceHEC.AddStatutAsync(statutDTO2); // Ajout du statut
 
             }
-       
 
-            
+
+
 
             string fullName = $"{reservationDTO.ClientName} {reservationDTO.ClientPrenom}";
 
             // Construction du DateTime avec la date et l'heure de réservation
             DateTime reservationDateTime = DateTime.ParseExact($"{reservationDTO.DateResa} {reservationDTO.TimeResa}", "yyyy-MM-dd HH:mm", null);
 
-            // Envoi de l'email de confirmation en attente au client
-            await _emailService.SendPendingResaClientAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+            if (!string.IsNullOrWhiteSpace(reservationDTO.origin))
+            {
+                if (reservation.OccupationStatusSoirOnBook == "FreeTable21" && reservationDateTime.Hour >= 18)
+                {
+                    await _emailService.SendClientReservationConfirmeFreeTable21Async(
+                        reservation.Client.Email,        // Email du client
+                        fullName,                        // Nom complet du client
+                        reservation.NumberOfGuest,       // Nombre de personnes
+                        reservationDateTime,             // Date et heure de la réservation
+                        reservation.Id                   // ID de la réservation pour le lien
+                    );
+                }
+                else if (reservation.OccupationStatusMidiOnBook == "MidiDoubleService" && reservationDateTime.Hour < 15)
+                {
+                    await _emailService.SendClientReservationConfirmeFreeTable1330Async(
+                        reservation.Client.Email,        // Email du client
+                        fullName,                        // Nom complet du client
+                        reservation.NumberOfGuest,       // Nombre de personnes
+                        reservationDateTime,             // Date et heure de la réservation
+                        reservation.Id                   // ID de la réservation pour le lien
+                    );
+                }
+                else
+                {
+                    await _emailService.SendClientReservationConfirmeAsync(
+                        reservation.Client.Email,        // Email du client
+                        fullName,                        // Nom complet du client
+                        reservation.NumberOfGuest,       // Nombre de personnes
+                        reservationDateTime,             // Date et heure de la réservation
+                        reservation.Id                   // ID de la réservation pour le lien
+                    );
+                }
 
-            // Envoi de l'email de notification au gestionnaire pour lui dire qu'une nouvelle réservation est en attente de traitement
-            await _emailService.SendNotificationGestionnaireReservationAsync(fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+
+            }
+            else
+            {
+                // Envoi de l'email de confirmation en attente au client
+                await _emailService.SendPendingResaClientAsync(reservationDTO.ClientEmail, fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+
+                // Envoi de l'email de notification au gestionnaire pour lui dire qu'une nouvelle réservation est en attente de traitement
+                await _emailService.SendNotificationGestionnaireReservationAsync(fullName, reservationDTO.NumberOfGuest, reservationDateTime, reservation.Id);
+
+            }
+
+    
 
             // Mise à jour des notifications dans la base de données
-            if (string.IsNullOrWhiteSpace(reservationDTO.origin)) 
-            { 
-                await _serviceToggle.IncrementNotificationCountAsync(); 
+            if (string.IsNullOrWhiteSpace(reservationDTO.origin))
+            {
+                await _serviceToggle.IncrementNotificationCountAsync();
             }
-                
+
 
             return reservation;
         }
@@ -487,15 +528,42 @@ namespace Mio_Rest_Api.Services
             string fullName = $"{reservation.Client.Name} {reservation.Client.Prenom}";
             DateTime reservationDateTime = DateTime.ParseExact($"{reservation.DateResa} {reservation.TimeResa}", "dd/MM/yyyy HH:mm", null);
 
+            
+            if (reservation.OccupationStatusSoirOnBook == "FreeTable21" && reservationDateTime.Hour >= 18)
+            {
+                await _emailService.SendClientReservationConfirmeFreeTable21Async(
+                    reservation.Client.Email,        // Email du client
+                    fullName,                        // Nom complet du client
+                    reservation.NumberOfGuest,       // Nombre de personnes
+                    reservationDateTime,             // Date et heure de la réservation
+                    reservation.Id                   // ID de la réservation pour le lien
+                );
+            }
+            else if (reservation.OccupationStatusMidiOnBook == "MidiDoubleService" && reservationDateTime.Hour < 15)
+            {
+                await _emailService.SendClientReservationConfirmeFreeTable1330Async(
+                    reservation.Client.Email,        // Email du client
+                    fullName,                        // Nom complet du client
+                    reservation.NumberOfGuest,       // Nombre de personnes
+                    reservationDateTime,             // Date et heure de la réservation
+                    reservation.Id                   // ID de la réservation pour le lien
+                );
+            }
+            else
+            {
+                await _emailService.SendClientReservationConfirmeAsync(
+                    reservation.Client.Email,        // Email du client
+                    fullName,                        // Nom complet du client
+                    reservation.NumberOfGuest,       // Nombre de personnes
+                    reservationDateTime,             // Date et heure de la réservation
+                    reservation.Id                   // ID de la réservation pour le lien
+                );
+            }
 
-            // Appel du service d'email pour envoyer l'email de confirmation au client
-            await _emailService.SendClientReservationConfirmeAsync(
-                reservation.Client.Email,         // Email du client
-                fullName,                         // Nom complet du client
-                reservation.NumberOfGuest,        // Nombre de personnes
-                reservationDateTime,              // Date et heure de la réservation
-                reservation.Id                    // ID de la réservation pour le lien
-            );
+
+
+
+
 
             // Mise à jour des notifications après la confirmation
             await _serviceToggle.DecrementNotificationCountAsync();

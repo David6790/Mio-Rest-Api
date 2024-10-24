@@ -14,6 +14,10 @@ namespace Mio_Rest_Api.Services.Mio_Rest_Api.Services
         Task SendClientModificationConfirmeAsync(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId);
         Task SendClientModificationEnAttenteAsync(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId);
         Task SendClientReservationConfirmeAsync(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId);
+        Task SendClientReservationConfirmeFreeTable21Async(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId);
+
+        Task SendClientReservationConfirmeFreeTable1330Async(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId);
+
 
         // Méthodes pour les notifications destinées aux gestionnaires
         Task SendNotificationGestionnaireCommentaireAsync(string clientName, string clientComment, DateTime dateTime, int resId);
@@ -164,6 +168,34 @@ namespace Mio_Rest_Api.Services.Mio_Rest_Api.Services
             };
             await SendEmailToClientAsync(toEmail, "d-bb9fc72c316e4dde9e66a3ce98ba8e8a", templateData);
         }
+
+        public async Task SendClientReservationConfirmeFreeTable21Async(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId)
+        {
+            var templateData = new
+            {
+                clientName,
+                numberOfGuest = numberOfGuests,
+                dateTime = dateTime.ToString("dd/MM/yyyy HH:mm"),
+                dateTimeEN = dateTime.ToString("MMMM dd, yyyy HH:mm"),
+                resId // Ajout de l'ID pour construire le lien si besoin
+            };
+            await SendEmailToClientAsync(toEmail, "d-fcc95e34c1274d0caaa99a71e460cff8", templateData);
+        }
+
+        public async Task SendClientReservationConfirmeFreeTable1330Async(string toEmail, string clientName, int numberOfGuests, DateTime dateTime, int resId)
+        {
+            var templateData = new
+            {
+                clientName,
+                numberOfGuest = numberOfGuests,
+                dateTime = dateTime.ToString("dd/MM/yyyy HH:mm"),
+                dateTimeEN = dateTime.ToString("MMMM dd, yyyy HH:mm"),
+                resId // Ajout de l'ID pour construire le lien si besoin
+            };
+            await SendEmailToClientAsync(toEmail, "d-1b31100fc4164f1ba4a97cdb75c553c8", templateData);
+        }
+
+
 
         #endregion
 
